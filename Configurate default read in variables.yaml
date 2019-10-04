@@ -1,0 +1,13 @@
+---
+
+default_csv: Inputs/Folder_of_csvs/10smooth.csv
+default_folder_of_csvs: Inputs/Folder_of_csvs
+default_background_image_name: Inputs/Outlined_CrokePark_Level5_Cameras.png #Inputs/Floor plan.jpg
+default_output_filename: video.mp4
+default_length_of_video: 60
+default_basewidth: 1024
+defualt_shapes_filename: File_of_shapes.json
+default_colourmap_name: plasma
+default_colourmap_image_name: Inputs/Labeled_Colourmap.png
+default_folder_of_videos: Inputs/Folder_of_videos
+default_file_of_events: Inputs/File of events.txt
