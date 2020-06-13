@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+This program needs the path to a YAML/JSON Configuraton file
+It returns a file containing a list of dictionaries containing the details of the coordinates of the shapes drawn when this program is run.
+"""
+
 # imports
 import numpy as np
 import argparse
