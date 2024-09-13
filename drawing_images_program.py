@@ -16,12 +16,12 @@ import os
 
 '''
 # read in JSON configuration file
-with open("Configuration files/Configurate drawing variables.json", "r") as variables:
+with open("configs/drawing_configs.json", "r") as variables:
     config_variables = json.load(variables)
 '''
 
 # read in YAML configuration file
-with open("Configuration files/Configurate drawing variables.yaml", "r") as variables:
+with open("configs/drawing_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
 
 # get variables

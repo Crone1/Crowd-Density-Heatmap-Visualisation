@@ -21,18 +21,18 @@ print(time.time())
 
 '''
 # read in JSON configuration files
-with open("Configuration files/Configurate default read in variables.json", "r") as defaults:
+with open("configs/heatmap_setup_configs.json", "r") as defaults:
     default_config_variables = json.load(defaults)
 
-with open("Configuration files/Configurate variables.json", "r") as variables:
+with open("configs/heatmap_configs.json", "r") as variables:
     config_variables = json.load(variables)
 '''
 
 # read in YAML configuration files
-with open("Configuration files/Yaml/Configurate default read in variables.yaml", "r") as defaults:
+with open("configs/heatmap_setup_configs.yaml", "r") as defaults:
     default_config_variables = yaml.load(defaults, Loader=yaml.FullLoader)
 
-with open("Configuration files/Yaml/Configurate variables.yaml", "r") as variables:
+with open("configs/heatmap_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
 
 
