@@ -7,12 +7,13 @@ It returns a file containing a list of dictionaries containing the details of th
 
 # imports
 import numpy as np
-import argparse
 import json
 import yaml
 import cv2
 import sys
 import os
+
+from DrawingInputs import DrawingInputs
 
 '''
 # read in JSON configuration file
@@ -24,13 +25,9 @@ with open("configs/drawing_configs.json", "r") as variables:
 with open("configs/drawing_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
 
-# get variables
-default_output_filename = config_variables["default_output_filename"]
-default_basewidth = config_variables["default_basewidth"]
-
 color_of_drawing = config_variables["color_of_drawing"]
 mode = config_variables["default_mode"]
-proportion_of_basewidth_to_make_line_thickness = config_variables["proportion_of_basewidth_to_make_line_thickness"]
+proportion_of_base_width_to_make_line_thickness = config_variables["proportion_of_basewidth_to_make_line_thickness"]
 
 # variables needed to set up drawing
 drawing = False
@@ -41,140 +38,13 @@ poly_points = []
 img_hist = []
 
 
-def touch_up_file_name(name):
-
-    """
-    Function Goal : add ".json" to the end of the output file name if it isn't already there
-
-    name : string - name of the output file
-
-    return : string - name of the output video ending in ".json"
-    """
-
-    if name[-5:] != ".json":
-        return name + ".json"
-
-    else:
-        return name
-
-
-def get_variables_from_command_line():
-
-    parser = argparse.ArgumentParser(description="The variables that make this programme work")
-
-    # number of csvs
-    parser.add_argument(dest="num_csv", nargs="?", type=int,
-                        help="The number of areas to draw using this program - This value must match the number of csv files in the folder of csv files you supply to the visualisation program.")
-
-    # background image name
-    parser.add_argument(dest="background_image_name", nargs="?", type=str,
-                        help="The path to the image that will act as the background image that you will draw the different areas on.")
-
-    # output filename
-    parser.add_argument('-of', dest="output_filename", default=default_output_filename, nargs="?", type=str, required=False,
-                        help="The name of/path to the file that you want the data on the shapes you drew to be output to.")
-
-    # basewidth
-    parser.add_argument('-bw', dest="basewidth", default=default_basewidth, nargs="?", type=int, required=False,
-                        help="The width that you want the base of the background image to be scaled to.")
-
-    args = parser.parse_args()
-
-    # background
-    if args.background_image_name:
-        try:
-            if cv2.imread(args.background_image_name).all() == None:
-                pass
-
-        except AttributeError:
-            print("\nThe name entered does not corrospond to a valid name of an image in this directory, please run this program again with a valid path to an image.")
-            exit(0)
-
-    else:
-        print("\nYou did not enter a path to a background image. Please re-run this program and add a valid path to a background image as a command line argument.")
-        exit(0)
-
-    if not args.basewidth:
-        print("\nYou did not enter an integer for the width of the base of the background image. Please re-run this program and fix the command line arguments to include this integer.")
-        exit(0)
-
-    # output filename
-    if args.output_filename:
-        output_filename = touch_up_file_name(args.output_filename)
-
-    else:
-        print("\nYou did not enter the name of a file for the shapes to be output to. Please re-run this program and fix the command line arguments to include this.")
-        exit(0)
-
-    return args.num_csv, args.background_image_name, args.basewidth, output_filename
-
-
-def get_variables_from_user():
-
-    # csv files
-    print("\nHello, How many areas do you want to draw using this program?\n - This value must match the number of csv files in the folder of csv files you supply to the visualisation program.")
-    read_in = input()
-    try:
-        num_csv = int(read_in)
-
-    except ValueError:
-        print("\nThis value must be an integer, please run this programme again entering a valid number of csvs.")
-        exit(0)
-
-    # background image
-    print("\nPlease enter the name of the background image you would like to highlight the camera areas on.")
-    background_image_name = input()
-    if background_image_name:
-        try:
-            if cv2.imread(background_image_name).all() == None:
-                pass
-
-        except AttributeError:
-            print("\nThe name entered does not corrospond to a valid name of an image in this directory, please run this program again with a valid path to an image.")
-            exit(0)
-
-    else:
-        print("\nYou did not enter a path to a background image. Please re-run this program and ensure to enter a valid path to a background image.")
-        exit(0)
-
-
-    print("\nTo set the following variables to default values: press 'Enter'.")
-
-    # filename
-    print("\nPlease enter what name you would like the output file to be called.")
-    x = input()
-    if x:
-        output_filename = touch_up_file_name(x)
-
-    else:
-        output_filename = default_output_filename
-        print("\nThe output filename has been set to the default - '{}'.".format(default_output_filename))
-
-    # basewidth
-    print("\nPlease enter the number that you would like the width of the base of the background image to be when scaled.")
-    read_in = input()
-    if read_in:
-        try:
-            basewidth = int(read_in)
-
-        except ValueError:
-            print("\nThis value must be an integer, please run this programme again with a valid width.")
-            exit(0)
-
-    else:
-        basewidth = default_basewidth
-        print("\nThe width of image along the x-axis has been set to the default - {}.".format(default_basewidth))
-
-    return num_csv, background_image_name, basewidth, output_filename
-
-
-def reshape_background_image(img_name, basewidth):
+def reshape_background_image(img_name, base_width):
 
     """
     Function Goal : reshape the image so that it still maintains the same proportion but that its width is the basewidth
 
     img_name : string - the name of the file containing the image you want to reshape
-    basewidth : integer - the width that you want the image to be
+    base_width : integer - the width that you want the image to be
     
     return : 3D numpy array of integers - this array represents the image in its reshaped form in a way that python can deal with.
     """
@@ -189,30 +59,27 @@ def reshape_background_image(img_name, basewidth):
         cv2.transpose(img, img2)
         cv2.flip(img2, 1, img2)
 
-        # calculate the desired hight of the image based on the proportion of the original image and the desired width
-        width_percent = (basewidth / float(img2.shape[1]))
+        # calculate the desired height of the image based on the proportion of the original image and the desired width
+        width_percent = (base_width / float(img2.shape[1]))
         height_size = int(img2.shape[0] * width_percent)
 
-
-        reshaped_img = cv2.resize(img2, (basewidth, height_size))
+        reshaped_img = cv2.resize(img2, (base_width, height_size))
         rotated = True
 
     else:'''
 
-    width_percent = (basewidth / float(img.shape[1]))
+    width_percent = (base_width / float(img.shape[1]))
     height_size = int(img.shape[0] * width_percent)
 
-    reshaped_img = cv2.resize(img, (basewidth, height_size))
+    reshaped_img = cv2.resize(img, (base_width, height_size))
 
     return reshaped_img
 
 
-def print_how_to_use_image_drawer(num_csv):
+def print_how_to_use_image_drawer():
 
     """
     Function Goal : This function contains a series of print statements that explain to the user how to use the program and draw the shapes on the image
-
-    num_csv : integer - the number of csvs that were given to the program
 
     return : None
 
@@ -224,14 +91,6 @@ def print_how_to_use_image_drawer(num_csv):
         "Enter" (in poly mode): Finish polygon
         "Backspace": Undo
     """
-
-    print("\nOnly draw one shape per area that the sensor covers.\n")
-    if num_csv == 1:
-        print("You only supplied one csv so please only draw 1 area.\n")
-
-    else:
-        print("Please draw {} areas.".format(num_csv, num_csv))
-        print("Please draw the areas in the order that corrosponds to the order the csvs are in the folder you will supply to the visualisation progam.\n")
 
     print(" To:\t\t\t\t Press:")
     print(" Draw rectangle:\t\t 'r'\n Draw multi cornered polygon:\t 'p'\n Draw circle:\t\t\t 'c'")
@@ -393,6 +252,7 @@ def draw_on_image(image, thickness):
 
     return shapes
 
+
 def handle_inputs():
 
     """
@@ -401,38 +261,33 @@ def handle_inputs():
     return : None
     """
 
+    input_handler = DrawingInputs()
 
     if len(sys.argv) > 1:
-        num_csv, background_image_name, basewidth, output_filename = get_variables_from_command_line()
-
+        input_handler.get_variables_from_command_line()
     else:
-        num_csv, background_image_name, basewidth, output_filename = get_variables_from_user()
+        input_handler.get_variables_from_user()
 
-    main(num_csv, background_image_name, basewidth, output_filename)
+    main(input_handler.background_folder, input_handler.background_name, input_handler.base_width, input_handler.output_folder)
 
 
-def main(num_csv, background_image_name, basewidth, output_filename=""):
+def main(background_folder, background_name, base_width, output_folder):
 
-    background = reshape_background_image(background_image_name, basewidth)
-    line_thickness = int(proportion_of_basewidth_to_make_line_thickness * basewidth)
+    background_path = os.path.join(background_folder, background_name)
+    background = reshape_background_image(background_path, base_width)
+    line_thickness = int(proportion_of_base_width_to_make_line_thickness * base_width)
 
-    print_how_to_use_image_drawer(num_csv)
+    print_how_to_use_image_drawer()
     shapes = draw_on_image(background, line_thickness)
 
-    if len(shapes) == num_csv:
-        if output_filename:
-            with open(output_filename, 'w') as file_of_shapes:
-                string_of_shapes = json.dumps(shapes)
-                file_of_shapes.write(string_of_shapes)
+    # output to file
+    output_filename = os.path.splitext(os.path.basename(background_name))[0]
+    output_path = os.path.join(output_folder, output_filename + ".json")
+    with open(output_path, 'w') as file_of_shapes:
+        string_of_shapes = json.dumps(shapes)
+        file_of_shapes.write(string_of_shapes)
 
-            print("\nThe shapes were written to the file under the name '" + str(output_filename) + "'.")
-
-        else:
-            return shapes
-
-    else:
-        print("\nYou supplied {} csvs but drew {} shapes. Please re-run the programme drawing the same amount of areas on the image as csvs you supply.".format(num_csv, len(shapes)))
-        exit(0)
+        print("\nThe shapes were written to the file under the name '" + str(output_path) + "'.")
 
 
 if __name__ == '__main__':
