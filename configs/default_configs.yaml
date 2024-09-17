@@ -2,10 +2,12 @@
 
 default_csv: data/density_csvs/level_5__area_10.csv
 default_folder_of_csvs: data/density_csvs
+default_background_folder: data/floor_plans
 default_background_image_name: data/floor_plans/level_5.png
 default_output_filename: video.mp4
 default_length_of_video: 60
 default_base_width: 1024
+defualt_area_details_folder: data/area_outlines
 defualt_shapes_filename: data/area_outlines/level_5.json
 default_colourmap_name: plasma
 default_colourmap_image_name: data/Labeled_Colourmap.png

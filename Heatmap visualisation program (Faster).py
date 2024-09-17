@@ -21,8 +21,8 @@ print(time.time())
 
 
 # read in YAML configuration files
-with open("configs/heatmap_setup_configs.yaml", "r") as defaults:
-    default_config_variables = yaml.load(defaults, Loader=yaml.FullLoader)
+with open("configs/default_configs.yaml", "r") as defaults_file:
+    default_configs = yaml.load(defaults_file, Loader=yaml.FullLoader)
 
 with open("configs/heatmap_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
@@ -51,16 +51,16 @@ cv2_dic = {
 }
 
 # default variables - most only used for testing
-default_colourmap_name = default_config_variables["default_colourmap_name"]
-default_background_image_name = default_config_variables["default_background_image_name"]
-default_base_width = default_config_variables["default_base_width"]
-default_length_of_video = default_config_variables["default_length_of_video"]
-default_output_filename = default_config_variables["default_output_filename"]
-default_folder_of_videos = default_config_variables["default_folder_of_videos"]
-defualt_shapes_filename = default_config_variables["defualt_shapes_filename"]
-default_file_of_events = default_config_variables["default_file_of_events"]
-default_folder_of_csvs = default_config_variables["default_folder_of_csvs"]
-default_csv = default_config_variables["default_csv"]
+default_colourmap_name = default_configs["default_colourmap_name"]
+default_background_image_name = default_configs["default_background_image_name"]
+default_base_width = default_configs["default_base_width"]
+default_length_of_video = default_configs["default_length_of_video"]
+default_output_filename = default_configs["default_output_filename"]
+default_folder_of_videos = default_configs["default_folder_of_videos"]
+defualt_shapes_filename = default_configs["default_shapes_filename"]
+default_file_of_events = default_configs["default_file_of_events"]
+default_folder_of_csvs = default_configs["default_folder_of_csvs"]
+default_csv = default_configs["default_csv"]
 
 sensor_value_name = config_variables["sensor_value_name"]
 

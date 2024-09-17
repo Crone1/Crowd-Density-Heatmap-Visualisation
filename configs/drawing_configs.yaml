@@ -1,8 +1,5 @@
 ---
 
-default_output_filename: File of shapes.json             # the name of the file that the dictionary of shapes will be output to
-default_base_width: 512                                  # the width that the image will be along the x-axis
-
 drawing_mode: poly           # default shape - can also be "circle" or "rect"
 drawing_colour: [0, 0, 255]  # colour shapes are drawn in - currently: red
 

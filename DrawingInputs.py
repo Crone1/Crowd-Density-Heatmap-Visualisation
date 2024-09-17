@@ -9,21 +9,21 @@ from utils import _exit_if_empty, _exit_if_try_fails
 
 
 # read in YAML configuration file
-with open("configs/drawing_configs.yaml", "r") as variables:
-    config_variables = yaml.load(variables, Loader=yaml.FullLoader)
+with open("configs/default_configs.yaml", "r") as config_file:
+    default_configs = yaml.load(config_file, Loader=yaml.FullLoader)
 
 # get variables
-default_background_folder = config_variables["default_background_folder"]
-default_output_folder = config_variables["default_output_folder"]
-default_base_width = config_variables["default_base_width"]
+default_background_folder = default_configs["default_background_folder"]
+default_area_details_folder = default_configs["default_area_details_folder"]
+default_base_width = default_configs["default_base_width"]
 
 
 class DrawingInputs:
 
     def __init__(self):
-        self.background_folder = default_background_folder
         self.background_name = ""
-        self.output_folder = default_output_folder
+        self.background_folder = default_background_folder
+        self.output_folder = default_area_details_folder
         self.base_width = default_base_width
 
     @staticmethod
@@ -105,7 +105,7 @@ class DrawingInputs:
         parser.add_argument(
             '-of',
             dest="output_folder",
-            default=default_output_folder,
+            default=default_area_details_folder,
             nargs="?",
             type=str,
             required=False,
@@ -144,14 +144,14 @@ class DrawingInputs:
         # output folder
         print(
             "\nPlease enter the path to the folder where a file containing the data on the dranw shapes will be output to."
-            "\nPress 'Enter' to set this to the default directory: '{}'".format(default_output_folder)
+            "\nPress 'Enter' to set this to the default directory: '{}'".format(default_area_details_folder)
         )
         supplied_output_folder = input()
-        if supplied_output_folder != "\n":
-            self.output_folder = self.process_output_folder(supplied_output_folder)
+        if supplied_output_folder == "\n":
+            self.output_folder = default_area_details_folder
+            print("\nThe output folder has been set to the default - '{}'.".format(default_area_details_folder))
         else:
-            output_folder = default_output_folder
-            print("\nThe output folder has been set to the default - '{}'.".format(default_output_folder))
+            self.output_folder = self.process_output_folder(supplied_output_folder)
 
         # base width
         print("\nPlease enter the width that the base of the background image to be scaled to.")
