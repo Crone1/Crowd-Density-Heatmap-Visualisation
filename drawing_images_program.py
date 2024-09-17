@@ -17,12 +17,13 @@ from DrawingInputs import DrawingInputs
 
 
 # read in YAML configuration file
-with open("configs/drawing_configs.yaml", "r") as variables:
-    config_variables = yaml.load(variables, Loader=yaml.FullLoader)
+with open("configs/drawing_configs.yaml", "r") as config_file:
+    drawing_configs = yaml.load(config_file, Loader=yaml.FullLoader)
 
-color_of_drawing = config_variables["color_of_drawing"]
-mode = config_variables["default_mode"]
-proportion_of_base_width_to_make_line_thickness = config_variables["proportion_of_base_width_to_make_line_thickness"]
+drawing_color = drawing_configs["drawing_color"]
+drawing_mode = drawing_configs["drawing_mode"]
+proportion_for_line_thickness = drawing_configs["proportion_for_line_thickness"]
+
 
 # variables needed to set up drawing
 drawing = False
@@ -91,32 +92,31 @@ def print_how_to_use_image_drawer():
     print(" Draw rectangle:\t\t 'r'\n Draw multi cornered polygon:\t 'p'\n Draw circle:\t\t\t 'c'")
     print(" Finish drawing polygon:\t 'Enter'")
     print(" Undo the last drawn shape:\t 'Backspace'\n Finished drawing:\t\t 'Esc'\n")
-    print("The default shape is:", mode)
+    print("The default shape is:", drawing_mode)
 
 
 def keyboard_callbacks(key, line_thickness):
 
-    global mode, drawing, poly_points, tmp_img
+    global drawing_mode, drawing, poly_points, tmp_img
 
-    # Modes
+    # drawing_modes
     if key == ord("c"):
-        mode = "circle"
+        drawing_mode = "circle"
 
     elif key == ord("r"):
-        mode = "rectangle"
+        drawing_mode = "rectangle"
 
     elif key == ord("p"):
-        mode = "polygon"
+        drawing_mode = "polygon"
 
     elif key == 13:  # Enter
         # Save polygon
-        if mode == "polygon":
+        if drawing_mode == "polygon":
             drawing = False
 
             # Update image
             tmp_img = np.copy(img_hist[-1])
-            cv2.polylines(tmp_img, np.int32([poly_points]), True,
-                          color_of_drawing, line_thickness)
+            cv2.polylines(tmp_img, np.int32([poly_points]), True, drawing_color, line_thickness)
             img_hist.append(np.copy(tmp_img))
 
             # Save parameters
@@ -129,7 +129,7 @@ def keyboard_callbacks(key, line_thickness):
 
     elif key == 8:  # Backspace
         # Undo
-        if mode == "polygon" and drawing:
+        if drawing_mode == "polygon" and drawing:
             if len(poly_points) > 0:
                 poly_points.pop()
 
@@ -140,7 +140,6 @@ def keyboard_callbacks(key, line_thickness):
 
 
 def dist_between_2_points(point1_x, point1_y, point2_x, point2_y):
-
     """
     Function Goal : get the distance between 2 points
 
@@ -149,7 +148,7 @@ def dist_between_2_points(point1_x, point1_y, point2_x, point2_y):
     point2_x : integer - the x coordinate for point 2
     point2_y : integer - the y coordinate for point 2
 
-    return : intager - the distance between point1 and point2
+    return : integer - the distance between point1 and point2
     """
 
     return np.hypot(point1_x - point2_x, point1_y - point2_y)
@@ -157,13 +156,13 @@ def dist_between_2_points(point1_x, point1_y, point2_x, point2_y):
 
 def mouse_callbacks(event, x, y, flags, param, line_thickness):
 
-    global start_x, start_y, drawing, mode, img, tmp_img, color_of_drawing, poly_points
+    global start_x, start_y, drawing, drawing_mode, img, tmp_img, drawing_color, poly_points
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
         start_x, start_y = x, y
 
-        if mode == "polygon":
+        if drawing_mode == "polygon":
             poly_points.append((x, y))
 
     elif event == cv2.EVENT_MOUSEMOVE:
@@ -172,24 +171,24 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             tmp_img = np.copy(img_hist[-1])
 
             # Draw temporary shape that follows the cursor
-            if mode == "rectangle":
+            if drawing_mode == "rectangle":
                 cv2.rectangle(tmp_img, (start_x, start_y),
-                              (x, y), color_of_drawing, line_thickness)
+                              (x, y), drawing_color, line_thickness)
 
-            elif mode == "circle":
+            elif drawing_mode == "circle":
                 cv2.circle(tmp_img, (start_x, start_y), int(
-                    dist_between_2_points(start_x, start_y, x, y)), color_of_drawing, line_thickness)
+                    dist_between_2_points(start_x, start_y, x, y)), drawing_color, line_thickness)
 
-            elif mode == "polygon":
+            elif drawing_mode == "polygon":
                 cv2.polylines(tmp_img, np.int32(
-                    [poly_points + [(x, y)]]), True, color_of_drawing, line_thickness)
+                    [poly_points + [(x, y)]]), True, drawing_color, line_thickness)
 
     elif event == cv2.EVENT_LBUTTONUP:
         drawing = False
 
         # Finish drawing shape
-        if mode == "rectangle" and (start_x != x or start_y != y):
-            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), color_of_drawing, line_thickness)
+        if drawing_mode == "rectangle" and (start_x != x or start_y != y):
+            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_color, line_thickness)
             # save shape as json
             shapes.append({
                 "type": "rectangle",
@@ -197,16 +196,16 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
                 "end": (x, y),
             })
 
-        elif mode == "circle":
+        elif drawing_mode == "circle":
             radius = int(dist_between_2_points(start_x, start_y, x, y))
-            cv2.circle(tmp_img, (start_x, start_y), radius, color_of_drawing, line_thickness)
+            cv2.circle(tmp_img, (start_x, start_y), radius, drawing_color, line_thickness)
             shapes.append({
                 "type": "circle",
                 "centre": (start_x, start_y),
                 "radius": radius,
             })
 
-        elif mode == "polygon":
+        elif drawing_mode == "polygon":
             # ie dont cancel drawing
             drawing = True
             return
@@ -262,7 +261,7 @@ def main(background_folder, background_name, base_width, output_folder):
 
     background_path = os.path.join(background_folder, background_name)
     background = reshape_background_image(background_path, base_width)
-    line_thickness = int(proportion_of_base_width_to_make_line_thickness * base_width)
+    line_thickness = int(proportion_for_line_thickness * base_width)
 
     print_how_to_use_image_drawer()
     shapes = draw_on_image(background, line_thickness)

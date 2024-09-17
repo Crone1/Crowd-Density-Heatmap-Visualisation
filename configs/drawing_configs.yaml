@@ -2,6 +2,8 @@
 
 default_output_filename: File of shapes.json             # the name of the file that the dictionary of shapes will be output to
 default_base_width: 512                                  # the width that the image will be along the x-axis
-color_of_drawing: [0, 0, 255]                            # the colour that the shapes will be drawn in - this current colour is red
-default_mode: rect                                       # use "circle" or "poly" to change the default mode to a circle or a polygon respectively
-proportion_of_base_width_to_make_line_thickness: 0.0025  # the proportion of the width of the background image to make the thickness of the line drawn on screen when drawing the areas
+
+drawing_mode: poly           # default shape - can also be "circle" or "rect"
+drawing_colour: [0, 0, 255]  # colour shapes are drawn in - currently: red
+
+proportion_for_line_thickness: 0.0025  # proportion of image width to make line thickness of drawn shapes
