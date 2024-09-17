@@ -613,7 +613,7 @@ def reshape_background_image(img_name, base_width):
 
     height, width = img.shape[:2]
 
-    # calculate the desired hight of the image based on the proportion of the original image and the desired width
+    # calculate the desired height of the image based on the proportion of the original image and the desired width
     width_percent = (base_width / float(img.shape[1]))
     height_size = int(img.shape[0] * width_percent)
 
@@ -627,7 +627,7 @@ def create_array_of_shape(shape_details, img_size):
     Function Goal : Create an array with the same dimensions as the image that the shapes are being drawn on with 1's where the shape should be and 0's everywhere else
                     This function deals with one shape and returns an array containing only 1 shapes mask
 
-    shape_details : dictionary - the dictionary containing the details needed to identifying the shape and its coordinates on the image
+    shape_details : dictionary - the dictionary containing the details needed to identify the shape and it's coordinates on the image
     img_size : tuple (int, int, int) - the size of the image that the shapes are being drawn on
 
     return : the array containing the 1's and 0's, the center point of the 1's
@@ -675,7 +675,7 @@ def create_array_of_shape(shape_details, img_size):
     elif shape_details["type"] == "poly":
         points = shape_details["points"]
         dataframe_means = np.mean(pd.DataFrame(points))
-        center = (dataframe_means[0], dataframe_means[1])
+        centre = (dataframe_means[0], dataframe_means[1])
 
         # draw 1's on array
         cv2.fillPoly(canvas, pts=np.int32([points]), color=value_in_mask)
@@ -683,7 +683,7 @@ def create_array_of_shape(shape_details, img_size):
         # create an array of the outline of the area
         cv2.polylines(outline_canvas, pts=np.int32([points]), isClosed=True, color=colour_of_outline_of_areas, thickness=thickness_of_outline_on_areas)
 
-    return canvas, center, outline_canvas, background_colour_of_areas
+    return canvas, centre, outline_canvas, background_colour_of_areas
 
 
 def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
@@ -742,12 +742,12 @@ def turn_dataframe_into_1_second_per_frame(df):
     """
     Function Goal : Change the joined dataframe so that each row is 1 second by averaging out the values where there is more than 1 row for a particular second
 
-    df : DataFrame - a DataFrame containing a Second column and then with columns of the the sensor values from each csv at that second
-                     (Second, df1 sensor value, df2 Crowd desnity, .... ect.)
+    df : DataFrame - a DataFrame containing a Second column and then with columns of the sensor values from each csv at that second
+                     (Second, df1 sensor value, df2 Crowd density, .... ect.)
 
-    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the the sensor values 
+    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the sensor values
                          from each csv at that second
-                         (Second, df1 sensor value, df2 Crowd desnity, .... ect.) but with 1 second per row
+                         (Second, df1 sensor value, df2 Crowd density, .... ect.) but with 1 second per row
     """
 
     new_df = pd.DataFrame(columns=(df.columns))
@@ -789,7 +789,7 @@ def join_dataframes(list_of_dfs):
 
     list_of_dfs : list of DataFrames - a list containing DataFrames with 2 columns, Second and sensor value
 
-    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the the sensor values 
+    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the the sensor values
                          from each csv at that second
                          (Second, df1 sensor value, df2 Crowd desnity, .... ect.)
     """
@@ -834,7 +834,7 @@ def join_dataframes(list_of_dfs):
 
 def calculate_frames_per_sec(number_of_frames_in_the_video, length_of_video):
     """
-    Function Goal : To calcuate the amount of frames per second that would have to be shown in order to create a video of the desired length
+    Function Goal : To calculate the amount of frames per second that would have to be shown in order to create a video of the desired length
 
     number_of_frames_in_the_video : integer - the number of frames worth of data in the input csvs
     length_of_video : integer - the desired length in seconds that you want the video to be
@@ -906,15 +906,15 @@ def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_hei
     Function Goal : Create the event text box for the top of the visualisation
 
     second : integer - the second that the particular frame is produced at
-    dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ..etc.} - This is a dictionary of different integers representing particular
-                                                                                                          seconds in the video mapped to an event that happend at that 
+    dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ... etc.} - This is a dictionary of different integers representing particular
+                                                                                                          seconds in the video mapped to an event that happend at that
                                                                                                           second. The string contains the text to be displayed in the text
                                                                                                           box at the top of the image.
     x_width : integer - the width of the text box along the x-axis
     y_height : integer - the height of the text box on the y-axis
     event_duration_frame : integer - the number of frames either side of the event to display the text for that event
 
-    return : 3D numpy array of integers - an array corrosponding to the text box containing the text about the event
+    return : 3D numpy array of integers - an array corresponding to the text box containing the text about the event
     """
 
     img = np.ones((y_height, x_width, 3))
@@ -991,12 +991,12 @@ def create_bar_plot_image(row, x_width, y_height, names, list_of_colours_of_bars
     """
     Function Goal : take a row of sensor values and make a bar plot from these integers
 
-    row : DataFrame of integers - this is a single row from a DataFrame that contains the sensor values corrosponding to a particular second in the larger DataFrame
+    row : DataFrame of integers - this is a single row from a DataFrame that contains the sensor values corresponding to a particular second in the larger DataFrame
     x_width : integer - the width on the x-axis to make the bar plot
     y_height : integer - the height on the y-axis to make the bar plot
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
 
-    return : an 3D numpy array of integers - an array corrosponding to an image of the bar plot
+    return : an 3D numpy array of integers - an array corresponding to an image of the bar plot
     """
 
     fig = plt.figure()
@@ -1047,14 +1047,14 @@ def polar_coordinates_to_cartesian_coordinates(rho, phi):
 
 def get_point_that_divides_2_points_into_interval(p1, p2, a, b):
     """
-    Function Goal : find the point that devides 2 points into the ratio a:b where dist(p1, point):dist(point, p2) is proportional to a:b
+    Function Goal : find the point that divides 2 points into the ratio a:b where dist(p1, point):dist(point, p2) is proportional to a:b
 
     p1 : tuple of integers (int, int) - a point
     p2 : tuple of integers (int, int) - a point
     a : integer - ratio a
     b : integer - ratio b
 
-    return : tuple of integers (int, int) - the point that devides the 2 points into the ration a:b
+    return : tuple of integers (int, int) - the point that divides the 2 points into the ration a:b
     """
 
     x = ((b * p1[0]) + (a * p2[0]))/(a + b)
@@ -1070,7 +1070,7 @@ def dist_between_2_points(p1, p2):
     p1 : tuple of integers (int, int) - a point
     p2 : tuple of integers (int, int) - a point
 
-    return : intager - th distance between p1 and p2
+    return : integer - th distance between p1 and p2
     """
 
     return np.hypot(p1[0] - p2[0], p1[1] - p2[1])
@@ -1103,13 +1103,13 @@ def generate_all_points_on_outside_of_shape(corners):
     for x, y in corners[1:] + corners[:1]:
 
         if start_x == x:
-            # line goes along x axis (horizonal)
+            # line goes along x-axis (horizontal)
 
             for new_y in range(min(start_y, y), max(start_y, y)):
                 points.append((x, new_y))
 
         elif start_y == y:
-            # line goes along the y axis (verticle)
+            # line goes along the y-axis (vertical)
 
             for new_x in range(min(start_x, x), max(start_x, x)):
                 points.append((new_x, y))
@@ -1138,8 +1138,8 @@ def get_equation_of_line(point1, point2):
     """
     Functon Goal : This function gets the coefficients and the constants of the equation of a line passing through 2 points
 
-    point1 : a tuple of integers (int, int) - a point on the cartesion plane
-    point2 : a tuple of integers (int, int) - a point on the cartesion plane
+    point1 : a tuple of integers (int, int) - a point on the cartesian plane
+    point2 : a tuple of integers (int, int) - a point on the cartesian plane
 
     return : a tuple of a list of integers and an integer ([int, int], int) - a list containing the coefficients for the x and y values in the equation of the line and the constant in the equation of the line
     """
@@ -1159,7 +1159,7 @@ def get_closest_point(corners, camera_point, center):
     """
     Function Goal : get a list of all the points on the outside of shape and find the closest point on the outside to the point given
 
-    corners : list of tuples of intrest [(int, int), (int, int), ...etc.] - a list of the corner points of the rectangle/polygon
+    corners : list of tuples of interest [(int, int), (int, int), ...etc.] - a list of the corner points of the rectangle/polygon
     point : tuple of integers (int, int) - a point
 
     return : the closest point on the outside of the shape to the point given
@@ -1189,18 +1189,18 @@ def get_closest_point(corners, camera_point, center):
 
 def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_camera_image_midpoints, width_to_move, height_to_move):
     """
-    Function Goal : Take an array corrosponding to the image, change some values so that when it is turned to an image, arrows are drawn between the shapes on the image
+    Function Goal : Take an array corresponding to the image, change some values so that when it is turned to an image, arrows are drawn between the shapes on the image
                     and the boxes containing the camera footage
 
-    image : 3D numpy array of integers - the array that corrosponds to one frame of the video
+    image : 3D numpy array of integers - the array that corresponds to one frame of the video
     list_of_shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
-    list_of_camera_image_midpoints : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes 
+    list_of_camera_image_midpoints : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
                                      containing camera footage
     width_to_move : integer - the value to add to the x value of the points on the shapes to account for the fact I added in the camera footage on the LHS and RHS
-    height_to_move : integer - the value to add to the y value of the points on the shapes to account for the fact I added in the colourmap and text box on the 
+    height_to_move : integer - the value to add to the y value of the points on the shapes to account for the fact I added in the colourmap and text box on the
                                top and bottom of the image
 
-    return : 3D numpy array of integers - the array that corrosponds to one frame of the video that includes the arrows draw on the image
+    return : 3D numpy array of integers - the array that corresponds to one frame of the video that includes the arrows draw on the image
     """
 
     for i in range(len(list_of_camera_image_midpoints)):
@@ -1267,15 +1267,15 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
 
 def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second, num_of_images_on_lhs, num_of_images_on_rhs, total_height):
     """
-    Function goal : create a list of points which corrospond to the coordinates of the midpoints of the edges of the boxes containing camera footage
+    Function goal : create a list of points which correspond to the coordinates of the midpoints of the edges of the boxes containing camera footage
 
-    first_x : integer - the distance along the x axis between the most left point and the edge of the first set of camera footage videos
-    distance_between_first_nd_second : integer - the distance along the x axis between the edge of the first set of camera footage videos and the start of the second
+    first_x : integer - the distance along the x-axis between the most left point and the edge of the first set of camera footage videos
+    distance_between_first_nd_second : integer - the distance along the x-axis between the edge of the first set of camera footage videos and the start of the second
                                                  set of camera footage video
     num_of_images_on_rhs : integer - the number of camera footage videos on the right hand side of the middle heatmap image
-    total_height : integer - the total height along the y axis of the whole video
+    total_height : integer - the total height along the y-axis of the whole video
 
-    return : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes 
+    return : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
                                                                             containing camera footage
     """
 
@@ -1302,16 +1302,16 @@ def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second
 
 def merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image):
     """
-    Function goal : Take the list of the arrays corrosponding to a frame from the different videos and seperate these into the images that will go on the LHS and the RHS, 
+    Function goal : Take the list of the arrays corresponding to a frame from the different videos and separate these into the images that will go on the LHS and the RHS,
                     then merge all the LHS and RHS images, put a border around them and then add the bar plot to the LHS image.
 
-    frames : A list of 3D numpy arrays [Array, Array, etc...] - A list of arrays of the different images from the different videos that corrosponds to 1 frame of video
+    frames : A list of 3D numpy arrays [Array, Array, etc...] - A list of arrays of the different images from the different videos that corresponds to 1 frame of video
                                                                 The length of this list is the number of videos that will feature on the frame
     num_of_images_on_lhs : integer - the number of images on the left hand side of the main heatmap image
     bar_plot_image : 3D numpy array of integers - this array represents the image of the bar plot
 
-    return : 3D numpy arrays of integers => Array, Array - the left array is an array corrosponding to the image that will go to the left of the main heatmap image
-                                                           the right array is an array corrosponding to the image that will go to the right of the main heatmap image
+    return : 3D numpy arrays of integers => Array, Array - the left array is an array corresponding to the image that will go to the left of the main heatmap image
+                                                           the right array is an array corresponding to the image that will go to the right of the main heatmap image
     """
 
     import time
@@ -1348,7 +1348,7 @@ def video_to_frames(read_videos, width, total_height):
     read_videos : list of video read ins - a list of the variables for each different video to read in the next frame from
     width : integer - the width to resize the images to
 
-    return : a List of 3D numpy arrays of images and an integer => [Array, array, etc..], integer - a list of the resized frames and the height of each frame
+    return : a List of 3D numpy arrays of images and an integer => [Array, array, etc.], integer - a list of the resized frames and the height of each frame
     """
 
     height_of_frame = int(total_height/int((len(read_videos)/2)))
@@ -1395,9 +1395,9 @@ def video_to_frames(read_videos, width, total_height):
     return resized_frames, height_of_frame
 
 
-def turn_numbers_into_abreviations(num):
+def turn_numbers_into_abbreviations(num):
     """
-    Function Goal : take a number and turn it into a string of that number with only 3 digits and using abbrevations such a K,M,B,T to shorten its length
+    Function Goal : take a number and turn it into a string of that number with only 3 digits and using abbreviations such a K,M,B,T to shorten its length
 
     num : integer - a number
 
@@ -1426,13 +1426,13 @@ def turn_numbers_into_abreviations(num):
 
 def create_colourmap(size, mapper, num_dividers):
     """
-    Function Goal : create the colourmap 
+    Function Goal : create the colourmap
 
     size : tuple of integers (int, int, int) - the size (height & width & colour) of the colourmap that we are going to create
     mapper : the heatmap mapper that maps a number to a colour
     num_dividers : integer - the number of values on the scale of the colourmap
 
-    return : a 3D numpy array of integers - an array that corrosponds to the colourmap image that wwas created
+    return : a 3D numpy array of integers - an array that corresponds to the colourmap image that was created
     """
 
     inner_colourmap_horizontal_border_width = int(size[1] * proportion_of_width_to_make_inner_colourmap_horizontal_border)
@@ -1485,8 +1485,8 @@ def create_colourmap(size, mapper, num_dividers):
     sensor_value_divider = sensor_value_range/num_dividers
 
     for i in range(0, num_dividers + 1):
-        abreviated_num = turn_numbers_into_abreviations(int(i * sensor_value_divider) + min_sensor_value)
-        list_of_index_values.append(abreviated_num)
+        abbreviated_num = turn_numbers_into_abbreviations(int(i * sensor_value_divider) + min_sensor_value)
+        list_of_index_values.append(abbreviated_num)
 
     for i in range(len(list_of_index_values)):
 
@@ -1522,13 +1522,13 @@ def create_colourmap(size, mapper, num_dividers):
 
 def create_image_of_second(second, x_width, y_height):
     """
-    Function Goal : Take a integer second and create an array corrosponding to an image that is a particular width and height that contains the second fed in
+    Function Goal : Take an integer second and create an array corresponding to an image that is a particular width and height that contains the second fed in
 
     second : integer - the second that the particular frame is produced at
     x_width : integer - the width along the x-axis to make the array
     y_height : integer - the height along the y-axis to make the array
 
-    return : a 3D numpy array of integers - this array corosponds to the image of a particular width and height that contains the integer second given
+    return : a 3D numpy array of integers - this array corresponds to the image of a particular width and height that contains the integer second given
     """
 
     img = np.ones((y_height, x_width, 3))
@@ -1551,15 +1551,15 @@ def create_image_of_second(second, x_width, y_height):
 
 def merge_to_one_image(list_of_images, background, list_of_centers, names, background_colour_of_areas):
     """
-    Function Goal : Take a list of arrays corrosponding to the images of the areas on the background and merge these arrays so that this array corrosponds to one image 
+    Function Goal : Take a list of arrays corresponding to the images of the areas on the background and merge these arrays so that this array corresponds to one image
                     of all the different areas and then add this image to the background to create one image
 
-    list_of_images : list of arrays of integers - la ist of arrays corrosponding to the images of the areas and their locations on the background 
-    background : 3D numpy array of integers - an array that corrosponds to the background image of the shapes
+    list_of_images : list of arrays of integers - la ist of arrays corresponding to the images of the areas and their locations on the background
+    background : 3D numpy array of integers - an array that corresponds to the background image of the shapes
     list_of_centers : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the center points of each of the shapes
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
 
-    return : 3D numpy array of integers - this array corrosponds to the image of the differnt areas all overlayed on th background image
+    return : 3D numpy array of integers - this array corresponds to the image of the different areas all overlaid on the background image
     """
 
     background_image = np.copy(background).astype(np.float64, copy=False)/255
@@ -1610,19 +1610,19 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
                                                  width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, list_of_centers, read_videos,
                                                  num_of_images_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours, background_colour_of_areas):
     """
-    Function Goal : Get the images of the backround, the shapes, the colourmap, the frame number, the camera footage videos and the bar plot image and merge these images 
+    Function Goal : Get the images of the background, the shapes, the colourmap, the frame number, the camera footage videos and the bar plot image and merge these images
                     together to form one singular image
 
     list_of_coloured_shapes : a list 3D numpy arrays of integers - the list containing the coloured masks of the shapes drawn on the background
-    background : 3D numpy Arrays of integers - an array that corrosponds to the background image of the shapes
-    colourmap_image : 3D numpy array of integers - an array that corrosponds to the image of the colourmap
-    df_of_row : DataFrame of integers - this is a single row from a DataFrame that contains a second and the sensor values corrosponding to that particular second 
+    background : 3D numpy Arrays of integers - an array that corresponds to the background image of the shapes
+    colourmap_image : 3D numpy array of integers - an array that corresponds to the image of the colourmap
+    df_of_row : DataFrame of integers - this is a single row from a DataFrame that contains a second and the sensor values corresponding to that particular second
                                         in the larger DataFrame
     x_width_of_second_image : the width along the x-axis to make the array
     y_height_of_second_image : the height along the y-axis to make the array
     width_of_left_and_right_images : the width along the x-axis to make the camera footage videos on either side of the main heatmap image
-    dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ..etc.} - This is a dictionary of different integers representing particular
-                                                                                                          seconds in the video mapped to an event that happend at that 
+    dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ... etc.} - This is a dictionary of different integers representing particular
+                                                                                                          seconds in the video mapped to an event that happend at that
                                                                                                           second. The string contains the text to be displayed in the text
                                                                                                           box at the top of the image.
     event_duration_frame : integer - the number of frames either side of the event to display the text for that event
@@ -1633,7 +1633,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     list_of-shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
     height_of_text_box : the height of the text box on the y-axis
 
-    return : 3D numpy array of integers - an array corrosponding to the image which is made up of all the the different images to be featured in the video merged together
+    return : 3D numpy array of integers - an array corresponding to the image which is made up of all the different images to be featured in the video merged together
     """
 
     import time
@@ -1645,7 +1645,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
     merge_heatmap.append(time.time() - merge_heatmap_start)
 
-    if dictionary_of_events:#
+    if dictionary_of_events:
 
         # create an image for the text box at the top
         text_box = create_image_of_text_box_at_top(df_of_row.Second.iloc[0], dictionary_of_events, background.shape[1], height_of_text_box, event_duration_frame)
@@ -1732,10 +1732,10 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
 def write_an_image_to_a_video(writer, img):
     """
-    Function Goal : take an array corrosponding to an image and write this image to a video so that it is one frame of the video
+    Function Goal : take an array corresponding to an image and write this image to a video so that it is one frame of the video
 
     writer : all the details to do with writing the images to the video
-    img : 3D numpy array of integers - the array that corrosponds to the image representing one frame of the video
+    img : 3D numpy array of integers - the array that corresponds to the image representing one frame of the video
 
     return : None
     """
@@ -1743,17 +1743,17 @@ def write_an_image_to_a_video(writer, img):
     writer.write(np.uint8(img * 255))
 
 
-def write_an_image_to_a_folder(output_foldername, img):
+def write_an_image_to_a_folder(output_folder_name, img):
     """
-    Function Goal : take an array corrosponding to an image and write this image to a folder
+    Function Goal : take an array corresponding to an image and write this image to a folder
 
-    output_foldername : string - the name of the folder that you want to write the images to
-    img : 3D numpy array of integers - the array that corrosponds to the image representing one frame of the video
+    output_folder_name : string - the name of the folder that you want to write the images to
+    img : 3D numpy array of integers - the array that corresponds to the image representing one frame of the video
 
     return : None
     """
 
-    cv2.imwrite(output_foldername, img*255)
+    cv2.imwrite(output_folder_name, img*255)
 
 
 def main():
