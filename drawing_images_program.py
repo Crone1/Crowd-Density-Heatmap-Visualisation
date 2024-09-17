@@ -15,11 +15,6 @@ import os
 
 from DrawingInputs import DrawingInputs
 
-'''
-# read in JSON configuration file
-with open("configs/drawing_configs.json", "r") as variables:
-    config_variables = json.load(variables)
-'''
 
 # read in YAML configuration file
 with open("configs/drawing_configs.yaml", "r") as variables:

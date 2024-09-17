@@ -19,14 +19,6 @@ import os
 
 print(time.time())
 
-'''
-# read in JSON configuration files
-with open("configs/heatmap_setup_configs.json", "r") as defaults:
-    default_config_variables = json.load(defaults)
-
-with open("configs/heatmap_configs.json", "r") as variables:
-    config_variables = json.load(variables)
-'''
 
 # read in YAML configuration files
 with open("configs/heatmap_setup_configs.yaml", "r") as defaults:
