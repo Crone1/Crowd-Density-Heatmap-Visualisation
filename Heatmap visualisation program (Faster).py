@@ -61,7 +61,7 @@ cv2_dic = {
 # default variables - most only used for testing
 default_colourmap_name = default_config_variables["default_colourmap_name"]
 default_background_image_name = default_config_variables["default_background_image_name"]
-default_basewidth = default_config_variables["default_basewidth"]
+default_base_width = default_config_variables["default_base_width"]
 default_length_of_video = default_config_variables["default_length_of_video"]
 default_output_filename = default_config_variables["default_output_filename"]
 default_folder_of_videos = default_config_variables["default_folder_of_videos"]
@@ -92,9 +92,9 @@ length_of_arrow_head_lines = config_variables["length_of_arrow_head_lines"]
 num_points_on_line_for_outside_of_shape = config_variables["num_points_on_line_for_outside_of_shape"]
 
 proportion_of_image_height_to_make_text_box = config_variables["proportion_of_image_height_to_make_text_box"]
-proportion_of_basewidth_to_make_second_image = config_variables["proportion_of_basewidth_to_make_second_image"]
+proportion_of_base_width_to_make_second_image = config_variables["proportion_of_base_width_to_make_second_image"]
 proportion_of_image_height_to_make_colourmap_and_second_image = config_variables["proportion_of_image_height_to_make_colourmap_and_second_image"]
-proportion_of_basewidth_to_make_the_left_and_right_images = config_variables["proportion_of_basewidth_to_make_the_left_and_right_images"]
+proportion_of_base_width_to_make_the_left_and_right_images = config_variables["proportion_of_base_width_to_make_the_left_and_right_images"]
 
 
 inner_colourmap_image_border_type = cv2_dic[config_variables["inner_colourmap_image_border_type"]]
@@ -338,7 +338,7 @@ def set_variables_using_folder():
     output_filename = default_output_filename
     length_of_video = default_length_of_video
     background_image_name = default_background_image_name
-    basewidth = default_basewidth
+    base_width = default_base_width
     colourmap_name = default_colourmap_name
     shapes_filename = defualt_shapes_filename
     events_file = default_file_of_events
@@ -346,7 +346,7 @@ def set_variables_using_folder():
     folder_of_videos = default_folder_of_videos
     list_of_videos = [os.path.join(folder_of_videos, f) for f in os.listdir(folder_of_videos) if os.path.isfile(os.path.join(folder_of_videos, f))]
 
-    return folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
+    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
 
 
 def set_variables_using_file():
@@ -360,7 +360,7 @@ def set_variables_using_file():
     output_filename = default_output_filename
     length_of_video = default_length_of_video
     background_image_name = default_background_image_name
-    basewidth = default_basewidth
+    base_width = default_base_width
     colourmap_name = default_colourmap_name
     shapes_filename = defualt_shapes_filename
     events_file = default_file_of_events
@@ -368,7 +368,7 @@ def set_variables_using_file():
     folder_of_videos = default_folder_of_videos
     list_of_videos = [os.path.join(folder_of_videos, f) for f in os.listdir(folder_of_videos) if os.path.isfile(os.path.join(folder_of_videos, f))]
 
-    return folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
+    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
 
 
 def touch_up_video_name(name):
@@ -439,8 +439,8 @@ def get_variables_from_command_line():
     parser.add_argument('-vl', dest="length_of_video", default=default_length_of_video, nargs="?", type=int, required=False,
                         help="How long you want the output video to be.")
 
-    # basewidth
-    parser.add_argument('-bw', dest="basewidth", default=default_basewidth, nargs="?", type=int, required=False,
+    # base_width
+    parser.add_argument('-bw', dest="base_width", default=default_base_width, nargs="?", type=int, required=False,
                         help="The width of the base of the background image when scaled.")
 
     # shapes file
@@ -497,10 +497,10 @@ def get_variables_from_command_line():
         print("\nYou did not enter an integer of how long you want the video to be. Please re-run the program entering a valid video length.")
         exit(0)
 
-    # basewidth
-    if not args.basewidth:
+    # base_width
+    if not args.base_width:
         # if a value is not input
-        print("\nYou did not enter an integer for the baswidth. Please re-run the program entering a valid basewidth.")
+        print("\nYou did not enter an integer for the baswidth. Please re-run the program entering a valid base_width.")
         exit(0)
 
     # shapes filename
@@ -584,7 +584,7 @@ def get_variables_from_command_line():
     else:
         list_of_videos = []
 
-    return folder, csv_files, output_filename, args.length_of_video, args.background_image_name, args.basewidth, args.colourmap_name, args.shapes_filename, args.events_file, args.folder_of_videos, list_of_videos
+    return folder, csv_files, output_filename, args.length_of_video, args.background_image_name, args.base_width, args.colourmap_name, args.shapes_filename, args.events_file, args.folder_of_videos, list_of_videos
 
 
 def obtain_variables_from_user():
@@ -645,20 +645,20 @@ def obtain_variables_from_user():
     else:
         length_of_video = default_length_of_video
 
-    # basewidth
+    # base_width
     print("\nPlease enter the number that you would like the width of the base of the background image to be when scaled.")
     read_in = input()
     if read_in:
         # if value is input
         try:
-            basewidth = int(read_in)
+            base_width = int(read_in)
 
         except ValueError:
             print("\nThis value must be an integer, please run this program again with a valid width.")
             exit(0)
 
     else:
-        basewidth = default_basewidth
+        base_width = default_base_width
 
     # shapes filename
     print("\nPlease enter the name of the file containing the list of the shapes and coordinates to use for the areas drawn on the image")
@@ -735,15 +735,15 @@ def obtain_variables_from_user():
 
     print("\nOK, Making the video now, please wait.")
 
-    return folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
+    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
 
 
-def reshape_background_image(img_name, basewidth):
+def reshape_background_image(img_name, base_width):
     """
-    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the basewidth
+    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
 
     img_name : string - the name of the file containing the image you want to reshape
-    basewidth : integer - the width that you want the image to be
+    base_width : integer - the width that you want the image to be
 
     return : 3D numpy array of integers - this array represents the image in its reshaped form in a way that python can deal with.
     """
@@ -753,10 +753,10 @@ def reshape_background_image(img_name, basewidth):
     height, width = img.shape[:2]
 
     # calculate the desired hight of the image based on the proportion of the original image and the desired width
-    width_percent = (basewidth / float(img.shape[1]))
+    width_percent = (base_width / float(img.shape[1]))
     height_size = int(img.shape[0] * width_percent)
 
-    reshaped_img = cv2.resize(img, (basewidth, height_size))
+    reshaped_img = cv2.resize(img, (base_width, height_size))
 
     return reshaped_img
 
@@ -1902,15 +1902,15 @@ def main():
 
     # read in the variables
     if len(sys.argv) > 1:
-        folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = get_variables_from_command_line()
+        folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = get_variables_from_command_line()
         full_read_time = 0
 
     else:
         start_read_time = time.time()
-        folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = obtain_variables_from_user()
+        folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = obtain_variables_from_user()
 
-        # folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_folder()
-        # folder, csv_files, output_filename, length_of_video, background_image_name, basewidth, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_file()
+        # folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_folder()
+        # folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_file()
 
         full_read_time = time.time() - start_read_time
 
@@ -1927,11 +1927,11 @@ def main():
 
     else:
         start_draw_time = time.time()
-        list_of_shapes_details = drawing_images_program.main(len(csv_files), background_image_name, basewidth)
+        list_of_shapes_details = drawing_images_program.main(len(csv_files), background_image_name, base_width)
         full_draw_time = time.time() - start_draw_time
 
     # reshape the background
-    background = reshape_background_image(background_image_name, basewidth)
+    background = reshape_background_image(background_image_name, base_width)
 
     list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(list_of_shapes_details, background.shape)
 
@@ -2003,7 +2003,7 @@ def main():
     mapper = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min_sensor_value, vmax=max_sensor_value), cmap=colourmap_name)
 
     # get width of second image
-    x_width_of_second_image = int(basewidth*proportion_of_basewidth_to_make_second_image) - (2 * second_image_border_width)
+    x_width_of_second_image = int(base_width*proportion_of_base_width_to_make_second_image) - (2 * second_image_border_width)
 
     # get the size of the colourmap image
     colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * second_image_border_width))
@@ -2019,7 +2019,7 @@ def main():
     y_height_of_second_image = colourmap_height
 
     # width of camera images beside heatmap
-    width_of_left_and_right_images = int(basewidth * proportion_of_basewidth_to_make_the_left_and_right_images)
+    width_of_left_and_right_images = int(base_width * proportion_of_base_width_to_make_the_left_and_right_images)
 
     # height of event text box
     height_of_text_box = int(proportion_of_image_height_to_make_text_box * (border_colmap.shape[0] + background.shape[0]))
@@ -2033,10 +2033,10 @@ def main():
 
     # get the width of the video
     if read_videos:
-        width_of_video = basewidth + (2 * merged_image_border_width) + (2 * width_of_left_and_right_images) + (2 * video_footage_border_width) + (2 * bar_plot_border_width)
+        width_of_video = base_width + (2 * merged_image_border_width) + (2 * width_of_left_and_right_images) + (2 * video_footage_border_width) + (2 * bar_plot_border_width)
 
     else:
-        width_of_video = basewidth + (2 * merged_image_border_width) + width_of_left_and_right_images  + (2 * bar_plot_border_width)
+        width_of_video = base_width + (2 * merged_image_border_width) + width_of_left_and_right_images  + (2 * bar_plot_border_width)
 
     #print(height_of_video)
     #print(width_of_video)

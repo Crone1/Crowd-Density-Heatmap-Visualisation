@@ -27,7 +27,7 @@ sensor_value_name: "Crowd density"
 
 # colourmap and second image
 proportion_of_image_height_to_make_colourmap_and_second_image: 0.25
-proportion_of_basewidth_to_make_second_image: 0.15                  # the width of the colourmap is "1 - this number"
+proportion_of_base_width_to_make_second_image: 0.15                  # the width of the colourmap is "1 - this number"
 
 
 inner_colourmap_image_border_type: BORDER_CONSTANT
@@ -59,7 +59,7 @@ line_type_of_index_on_colourmap: 1
 
 
 # left and right camera videos
-proportion_of_basewidth_to_make_the_left_and_right_images: 0.6
+proportion_of_base_width_to_make_the_left_and_right_images: 0.6
 
 # arrows
 angle_to_change_line_for_arrow_head: 0.78

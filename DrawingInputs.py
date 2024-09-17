@@ -12,7 +12,7 @@ with open("configs/drawing_configs.yaml", "r") as variables:
 # get variables
 default_background_folder = config_variables["default_background_folder"]
 default_output_folder = config_variables["default_output_folder"]
-default_base_width = config_variables["default_basewidth"]
+default_base_width = config_variables["default_base_width"]
 
 
 class DrawingInputs:
@@ -138,7 +138,7 @@ class DrawingInputs:
         # base_width
         parser.add_argument(
             '-bw',
-            dest="basewidth",
+            dest="base_width",
             default=default_base_width,
             nargs="?",
             type=int,
@@ -151,7 +151,7 @@ class DrawingInputs:
         # process data
         self.background_folder, self.background_name = self.process_background_image_name(args.background_image_name)
         self.output_folder = self.process_output_folder(args.output_folder)
-        self.base_width = self.process_base_width(args.basewidth)
+        self.base_width = self.process_base_width(args.base_width)
 
     def get_variables_from_user(self):
 

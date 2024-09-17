@@ -27,7 +27,7 @@ with open("configs/drawing_configs.yaml", "r") as variables:
 
 color_of_drawing = config_variables["color_of_drawing"]
 mode = config_variables["default_mode"]
-proportion_of_base_width_to_make_line_thickness = config_variables["proportion_of_basewidth_to_make_line_thickness"]
+proportion_of_base_width_to_make_line_thickness = config_variables["proportion_of_base_width_to_make_line_thickness"]
 
 # variables needed to set up drawing
 drawing = False
@@ -41,7 +41,7 @@ img_hist = []
 def reshape_background_image(img_name, base_width):
 
     """
-    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the basewidth
+    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
 
     img_name : string - the name of the file containing the image you want to reshape
     base_width : integer - the width that you want the image to be
