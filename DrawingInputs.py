@@ -5,6 +5,9 @@ import os.path
 import cv2
 import yaml
 
+from utils import _exit_if_empty, _exit_if_try_fails
+
+
 # read in YAML configuration file
 with open("configs/drawing_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
@@ -23,95 +26,68 @@ class DrawingInputs:
         self.output_folder = default_output_folder
         self.base_width = default_base_width
 
-
     @staticmethod
-    def process_background_image_name(path_supplied):
+    def process_background_image_name(image_path):
 
+        universal_criteria = "the path to the background image points to a valid image file."
         # check it's not empty
-        if not path_supplied:
-            print(
-                "\nYou did not enter a valid background image name."
-                " Please re-run this program ensuring the path to a background image is not empty."
-            )
-            exit(0)
+        _exit_if_empty(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
 
         # check the path exists
-        if os.path.exists(path_supplied):
-            background_folder = os.path.dirname(path_supplied)
-            background_name = os.path.basename(path_supplied)
-        elif os.path.exists(os.path.join(default_background_folder, path_supplied)):
+        if os.path.exists(image_path):
+            background_folder = os.path.dirname(image_path)
+            background_name = os.path.basename(image_path)
+        elif os.path.exists(os.path.join(default_background_folder, image_path)):
             background_folder = default_background_folder
-            background_name = path_supplied
+            background_name = image_path
         else:
             print(
                 "\nThe background image name entered does not point to a file that exists"
                 " in the current working directory or the default directory."
-                " Please re-run this program ensuring the path to the background image exists."
+                " Please re-run this program ensuring the path to the background image points to a valid image file."
             )
             exit(0)
 
         # check the file is an image file
-        try:
-            cv2.imread(os.path.join(background_folder, background_name))
-        except AttributeError:
-            print(
-                "\nThe background image name entered does not point to an valid image file."
-                " Please re-run this program ensuring the path to the background image points to an image file.")
-            exit(0)
+        _exit_if_try_fails(
+            cv2.imread,
+            args=[os.path.join(background_folder, background_name)],
+            exception=AttributeError,
+            error="The file path entered does not point to a valid image file.",
+            criteria=universal_criteria
+        )
 
         return background_folder, background_name
 
     @staticmethod
-    def process_output_folder(supplied_output_folder):
+    def process_output_folder(folder_path):
 
+        universal_criteria = "the path entered points to an existing folder."
         # check it's not empty
-        if not supplied_output_folder:
-            print(
-                "\nYou did not enter a valid folder name."
-                "Please re-run this program ensuring the path to the output folder is not empty."
-            )
-            exit(0)
-
+        _exit_if_empty(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
         # check the path exists
-        if not os.path.exists(supplied_output_folder):
-            print(
-                "\nThe folder path entered does not exist."
-                "Please re-run this program ensuring the path to the output folder points to a valid folder."
-            )
-            exit(0)
-
+        _exit_if_empty(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
         # check the path is a directory
-        if not os.path.isdir(supplied_output_folder):
-            print(
-                "\nThe folder path entered points to a file and not a folder."
-                "Please re-run this program ensuring the path to the output folder points to a valid folder."
-            )
-            exit(0)
+        _exit_if_empty(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
 
-        return supplied_output_folder
-
+        return folder_path
 
     @staticmethod
     def process_base_width(supplied_base_width):
 
+        universal_criteria = "the width entered for the base of the background image is a valid integer."
         # check it's not empty
-        if not supplied_base_width:
-            print(
-                "\nYou did not enter a valid width for the base of the background image."
-                "Please re-run this program ensuring you enter a valid value for the base width of the background image.")
-            exit(0)
-
+        _exit_if_empty(supplied_base_width, error="You did not enter a valid width for the base of the background image.", criteria=universal_criteria)
         # check it's an integer
-        try:
-            base_width = int(supplied_base_width)
-        except ValueError:
-            print(
-                "\nYou did not enter an integer for the width of the background image."
-                "Please re-run this program ensuring you enter an integer for the base width of the background image."
-            )
-            exit(0)
+        _exit_if_try_fails(
+            int,
+            args=[supplied_base_width],
+            exception=ValueError,
+            error="You did not enter an integer for the width of the background image.",
+            criteria=universal_criteria
+        )
 
-        return base_width
+        return supplied_base_width
 
     def get_variables_from_command_line(self):
 
