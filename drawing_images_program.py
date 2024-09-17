@@ -83,7 +83,7 @@ def print_how_to_use_image_drawer():
         "p": polygon
         "r": rectangle
         "Escape": Exit program
-        "Enter" (in poly mode): Finish polygon
+        "Enter" (in polygon drawing mode): Finish polygon
         "Backspace": Undo
     """
 
@@ -91,15 +91,7 @@ def print_how_to_use_image_drawer():
     print(" Draw rectangle:\t\t 'r'\n Draw multi cornered polygon:\t 'p'\n Draw circle:\t\t\t 'c'")
     print(" Finish drawing polygon:\t 'Enter'")
     print(" Undo the last drawn shape:\t 'Backspace'\n Finished drawing:\t\t 'Esc'\n")
-
-    if mode == "rect":
-        print("The default mode is rectangle.")
-
-    if mode == "circle":
-        print("The default mode is circle.")
-
-    if mode == "poly":
-        print("The default mode is polygon.")
+    print("The default shape is:", mode)
 
 
 def keyboard_callbacks(key, line_thickness):
@@ -111,14 +103,14 @@ def keyboard_callbacks(key, line_thickness):
         mode = "circle"
 
     elif key == ord("r"):
-        mode = "rect"
+        mode = "rectangle"
 
     elif key == ord("p"):
-        mode = "poly"
+        mode = "polygon"
 
     elif key == 13:  # Enter
         # Save polygon
-        if mode == "poly":
+        if mode == "polygon":
             drawing = False
 
             # Update image
@@ -129,7 +121,7 @@ def keyboard_callbacks(key, line_thickness):
 
             # Save parameters
             shapes.append({
-                "type": "poly",
+                "type": "polygon",
                 "points": poly_points,
             })
 
@@ -137,7 +129,7 @@ def keyboard_callbacks(key, line_thickness):
 
     elif key == 8:  # Backspace
         # Undo
-        if mode == "poly" and drawing:
+        if mode == "polygon" and drawing:
             if len(poly_points) > 0:
                 poly_points.pop()
 
@@ -171,7 +163,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
         drawing = True
         start_x, start_y = x, y
 
-        if mode == "poly":
+        if mode == "polygon":
             poly_points.append((x, y))
 
     elif event == cv2.EVENT_MOUSEMOVE:
@@ -180,7 +172,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             tmp_img = np.copy(img_hist[-1])
 
             # Draw temporary shape that follows the cursor
-            if mode == "rect":
+            if mode == "rectangle":
                 cv2.rectangle(tmp_img, (start_x, start_y),
                               (x, y), color_of_drawing, line_thickness)
 
@@ -188,7 +180,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
                 cv2.circle(tmp_img, (start_x, start_y), int(
                     dist_between_2_points(start_x, start_y, x, y)), color_of_drawing, line_thickness)
 
-            elif mode == "poly":
+            elif mode == "polygon":
                 cv2.polylines(tmp_img, np.int32(
                     [poly_points + [(x, y)]]), True, color_of_drawing, line_thickness)
 
@@ -196,7 +188,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
         drawing = False
 
         # Finish drawing shape
-        if mode == "rect" and (start_x != x or start_y != y):
+        if mode == "rectangle" and (start_x != x or start_y != y):
             cv2.rectangle(tmp_img, (start_x, start_y), (x, y), color_of_drawing, line_thickness)
             # save shape as json
             shapes.append({
@@ -214,7 +206,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
                 "radius": radius,
             })
 
-        elif mode == "poly":
+        elif mode == "polygon":
             # ie dont cancel drawing
             drawing = True
             return
