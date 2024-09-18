@@ -1,6 +1,6 @@
 ---
 
-drawing_mode: poly           # default shape - can also be "circle" or "rect"
+drawing_mode: polygon        # default shape - can also be "circle" or "rectangle"
 drawing_colour: [0, 0, 255]  # colour shapes are drawn in - currently: red
 
 proportion_for_line_thickness: 0.0025  # proportion of image width to make line thickness of drawn shapes

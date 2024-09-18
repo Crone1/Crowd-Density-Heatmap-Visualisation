@@ -20,7 +20,7 @@ from DrawingInputs import DrawingInputs
 with open("configs/drawing_configs.yaml", "r") as config_file:
     drawing_configs = yaml.load(config_file, Loader=yaml.FullLoader)
 
-drawing_color = drawing_configs["drawing_color"]
+drawing_colour = drawing_configs["drawing_colour"]
 drawing_mode = drawing_configs["drawing_mode"]
 proportion_for_line_thickness = drawing_configs["proportion_for_line_thickness"]
 
@@ -99,7 +99,7 @@ def keyboard_callbacks(key, line_thickness):
 
     global drawing_mode, drawing, poly_points, tmp_img
 
-    # drawing_modes
+    # Modes
     if key == ord("c"):
         drawing_mode = "circle"
 
@@ -116,7 +116,7 @@ def keyboard_callbacks(key, line_thickness):
 
             # Update image
             tmp_img = np.copy(img_hist[-1])
-            cv2.polylines(tmp_img, np.int32([poly_points]), True, drawing_color, line_thickness)
+            cv2.polylines(tmp_img, np.int32([poly_points]), True, drawing_colour, line_thickness)
             img_hist.append(np.copy(tmp_img))
 
             # Save parameters
@@ -156,7 +156,7 @@ def dist_between_2_points(point1_x, point1_y, point2_x, point2_y):
 
 def mouse_callbacks(event, x, y, flags, param, line_thickness):
 
-    global start_x, start_y, drawing, drawing_mode, img, tmp_img, drawing_color, poly_points
+    global start_x, start_y, drawing, drawing_mode, img, tmp_img, drawing_colour, poly_points
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
@@ -173,22 +173,22 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             # Draw temporary shape that follows the cursor
             if drawing_mode == "rectangle":
                 cv2.rectangle(tmp_img, (start_x, start_y),
-                              (x, y), drawing_color, line_thickness)
+                              (x, y), drawing_colour, line_thickness)
 
             elif drawing_mode == "circle":
                 cv2.circle(tmp_img, (start_x, start_y), int(
-                    dist_between_2_points(start_x, start_y, x, y)), drawing_color, line_thickness)
+                    dist_between_2_points(start_x, start_y, x, y)), drawing_colour, line_thickness)
 
             elif drawing_mode == "polygon":
                 cv2.polylines(tmp_img, np.int32(
-                    [poly_points + [(x, y)]]), True, drawing_color, line_thickness)
+                    [poly_points + [(x, y)]]), True, drawing_colour, line_thickness)
 
     elif event == cv2.EVENT_LBUTTONUP:
         drawing = False
 
         # Finish drawing shape
         if drawing_mode == "rectangle" and (start_x != x or start_y != y):
-            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_color, line_thickness)
+            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_colour, line_thickness)
             # save shape as json
             shapes.append({
                 "type": "rectangle",
@@ -198,7 +198,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
 
         elif drawing_mode == "circle":
             radius = int(dist_between_2_points(start_x, start_y, x, y))
-            cv2.circle(tmp_img, (start_x, start_y), radius, drawing_color, line_thickness)
+            cv2.circle(tmp_img, (start_x, start_y), radius, drawing_colour, line_thickness)
             shapes.append({
                 "type": "circle",
                 "centre": (start_x, start_y),
