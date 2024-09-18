@@ -1,15 +1,14 @@
 ---
 
-default_csv: data/density_csvs/level_5__area_10.csv
-default_folder_of_csvs: data/density_csvs
+default_csv_folder: data/density_csvs
+default_video_folder: data/cctv_videos
 default_background_folder: data/floor_plans
-default_background_image_name: data/floor_plans/level_5.png
-default_output_filename: video.mp4
-default_length_of_video: 60
-default_base_width: 1024
-defualt_area_details_folder: data/area_outlines
-defualt_shapes_filename: data/area_outlines/level_5.json
+default_background_image: data/floor_plans/level_5.png
+default_output_file: video.mp4
+default_area_details_folder: data/area_outlines
+default_events_file: data/event_details/level_5.txt
+# TODO: remove base_width
+default_base_width: 2048
+# TODO: remove below once automate colourmap creation
+default_colourmap_image: data/colourmap_image.png
 default_colourmap_name: plasma
-default_colourmap_image_name: data/Labeled_Colourmap.png
-default_folder_of_videos: data/cctv_videos
-default_file_of_events: data/event_details/level_5.txt

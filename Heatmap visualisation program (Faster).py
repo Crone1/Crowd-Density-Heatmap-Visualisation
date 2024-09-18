@@ -2,29 +2,29 @@
 
 # import libraries
 import matplotlib.pyplot as plt
-import drawing_images_program
 import pandas as pd
 import numpy as np
 import matplotlib
-import argparse
-import json
 import yaml
 import time
 import sys
 import cv2
-import os
 
 
 from VideoReader import VideoReaderQueue
+from HeatmapInputs import HeatmapInputs
 
 
 print(time.time())
 
 
-# read in YAML configuration files
+# read in default configuration variables
 with open("configs/default_configs.yaml", "r") as defaults_file:
     default_configs = yaml.load(defaults_file, Loader=yaml.FullLoader)
 
+base_width = default_configs["default_base_width"]
+
+# read in customisation configuration variables
 with open("configs/heatmap_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
 
@@ -51,18 +51,6 @@ cv2_dic = {
     "LINE_AA": cv2.LINE_AA,
 }
 
-# default variables - most only used for testing
-default_colourmap_name = default_configs["default_colourmap_name"]
-default_background_image_name = default_configs["default_background_image_name"]
-default_base_width = default_configs["default_base_width"]
-default_length_of_video = default_configs["default_length_of_video"]
-default_output_filename = default_configs["default_output_filename"]
-default_folder_of_videos = default_configs["default_folder_of_videos"]
-defualt_shapes_filename = default_configs["default_shapes_filename"]
-default_file_of_events = default_configs["default_file_of_events"]
-default_folder_of_csvs = default_configs["default_folder_of_csvs"]
-default_csv = default_configs["default_csv"]
-
 sensor_value_name = config_variables["sensor_value_name"]
 
 # other global variables
@@ -75,6 +63,7 @@ min_sensor_value = config_variables["min_sensor_value"]
 colour_of_Nan_values = config_variables["colour_of_Nan_values"]
 
 event_duration_sec = config_variables["event_duration_sec"]
+video_length = config_variables["default_video_length_sec"]
 
 lineType_of_arrow_between_camera_nd_area = config_variables["lineType_of_arrow_between_camera_nd_area"]
 lineThickness_of_arrow_between_camera_nd_area = config_variables["lineThickness_of_arrow_between_camera_nd_area"]
@@ -188,417 +177,6 @@ merge_heatmap = []
 colmap_creation = []
 
 
-def set_variables_using_folder():
-
-    """
-    This function is only used to speed up the process of running the program when testing
-    """
-
-    folder = default_folder_of_csvs
-    csv_files = [f for f in sorted(os.listdir(folder)) if os.path.isfile(os.path.join(folder, f))]
-    output_filename = default_output_filename
-    length_of_video = default_length_of_video
-    background_image_name = default_background_image_name
-    base_width = default_base_width
-    colourmap_name = default_colourmap_name
-    shapes_filename = defualt_shapes_filename
-    events_file = default_file_of_events
-
-    folder_of_videos = default_folder_of_videos
-    list_of_videos = [os.path.join(folder_of_videos, f) for f in os.listdir(folder_of_videos) if os.path.isfile(os.path.join(folder_of_videos, f))]
-
-    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
-
-
-def set_variables_using_file():
-
-    """
-    This function is only used to speed up the process of running the program when testing
-    """
-
-    folder = ""
-    csv_files = [default_csv]
-    output_filename = default_output_filename
-    length_of_video = default_length_of_video
-    background_image_name = default_background_image_name
-    base_width = default_base_width
-    colourmap_name = default_colourmap_name
-    shapes_filename = defualt_shapes_filename
-    events_file = default_file_of_events
-
-    folder_of_videos = default_folder_of_videos
-    list_of_videos = [os.path.join(folder_of_videos, f) for f in os.listdir(folder_of_videos) if os.path.isfile(os.path.join(folder_of_videos, f))]
-
-    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
-
-
-def touch_up_video_name(name):
-    """
-    Function Goal : add ".mp4" to the end of the video name if it isn't already there
-
-    name : string - name of the output video
-
-    return : string - name of the output video ending in ".mp4"
-    """
-
-    if name[-4:] != ".mp4":
-        return name + ".mp4"
-
-    else:
-        return name
-
-
-def get_list_of_csv_files(path_input):
-    """
-    Function Goal : Take the input string and extract the csvs from it
-
-    path_input : string - it is either the name of a folder full of csvs or the name of a single csv file
-
-    return : string, list of strings - folder name and list of the names of the csv files in the folder
-    """
-
-    csv_files = []
-    folder = ""
-
-    # check if the input is csv file
-    if os.path.isfile(path_input) and path_input[-4:] == ".csv":
-        csv_files.append(path_input)
-
-    # check if the input is a folder and put the names of the csv files within this folder into a list
-    elif os.path.isdir(path_input):
-        folder = path_input
-        csv_files = [f for f in sorted(os.listdir(path_input)) if os.path.isfile(os.path.join(path_input, f)) and f[-4:] == ".csv"]
-        if csv_files == []:
-            print("The folder you gave does not contain any csv files. Please run the program again with a valid folder path.")
-            exit(0)
-
-    else:
-        print("The location you gave isn't a csv file or a folder of csv files, please run this program again with a valid file name.")
-        exit(0)
-
-    return folder, csv_files
-
-
-def get_variables_from_command_line():
-    """
-    Function Goal: This function is used to read all of the variables in from the command line arguements
-    """
-
-    parser = argparse.ArgumentParser(description="The variables that make this program work")
-
-    # csv path
-    parser.add_argument(dest="path", nargs="?", type=str, help="The path to the csv files or the folder of csv files needed in this program.")
-
-    # background image name
-    parser.add_argument(dest="background_image_name", nargs="?", type=str, help="The background image that will contain the different areas of the cameras.")
-
-    # output filename
-    parser.add_argument('-of', dest="output_filename", default=default_output_filename, nargs="?", type=str, required=False,
-                        help="The name of the file that you want the video to be made under.")
-
-    # length of video
-    parser.add_argument('-vl', dest="length_of_video", default=default_length_of_video, nargs="?", type=int, required=False,
-                        help="How long you want the output video to be.")
-
-    # base_width
-    parser.add_argument('-bw', dest="base_width", default=default_base_width, nargs="?", type=int, required=False,
-                        help="The width of the base of the background image when scaled.")
-
-    # shapes file
-    parser.add_argument('-sf', dest="shapes_filename", default="", nargs="?", type=str, required=False,
-                        help="The file containing the a list of the shapes and coordinates to use for the areas drawn on the image.")
-
-    # colourmap_name
-    parser.add_argument('-cm', dest="colourmap_name", default=default_colourmap_name, nargs="?", type=str, required=False,
-                        help="The name of the colourmap used when changing the colours of the areas.")
-
-    # file of events
-    parser.add_argument('-ef', dest="events_file", default="", nargs="?", type=str, required=False,
-                        help="The name of the file containing the events that happen during the duration of the video. It features a second and the text describing the event seperated by a space and a new line for each event.")
-
-    # folder of videos
-    parser.add_argument('-vf', dest="folder_of_videos", default="", nargs="?", type=str, required=False,
-                        help="The name of the folder containing the video footage taken from the cameras that the data in the csvs was taken from.")
-
-    args = parser.parse_args()
-
-    # take the path and turn it into a list of the names of the csv files needed
-    folder, csv_files = get_list_of_csv_files(args.path)
-
-    # background
-    if args.background_image_name:
-        # if a value is input
-        try:
-            if cv2.imread(args.background_image_name).all() == None:
-                pass
-
-        except AttributeError:
-            print("\nThis background image does not exist, please run this program again with a valid path to an image.")
-            exit(0)
-
-    else:
-        # if  a value is not input
-        print("\nYou did not enter a path to a background image. Please re-run this program and ensure to enter a valid path to a background image.")
-        exit(0)
-
-    # output filename
-    if args.output_filename:
-        # if a value is input
-        output_filename = touch_up_video_name(args.output_filename)
-
-    else:
-        # if a value is not input
-        print("\nYou did not enter a valid output filename so the default output filename '{}' will be used instead.".format(default_output_filename))
-        # set to a default variable
-        output_filename = default_output_filename
-
-    # length of video
-    if not args.length_of_video:
-        # if a value is not input
-        print("\nYou did not enter an integer of how long you want the video to be. Please re-run the program entering a valid video length.")
-        exit(0)
-
-    # base_width
-    if not args.base_width:
-        # if a value is not input
-        print("\nYou did not enter an integer for the baswidth. Please re-run the program entering a valid base_width.")
-        exit(0)
-
-    # shapes filename
-    if args.shapes_filename:
-        # if value is input
-        if os.path.isfile(args.shapes_filename):
-            # if the input is a valid file
-            try:
-                with open(args.shapes_filename, "r") as file:
-                    json.load(file)
-
-            except (AttributeError, ValueError):
-                print("\nCould not load in the contents of the file containing the list of the shapes and coordinates to use for the areas drawn on the image.")
-                print("Please run this program again ensuring the format of the file is standard json format.")
-                exit(0)
-
-        else:
-            # if the input is not a valid file
-            print("\nThe file containing the list of the shapes and coordinates to use for the areas drawn on the image given does not exist.")
-            print("Please run this program again with a valid filename.")
-            exit(0)
-
-    else:
-        # if a value is not input
-        print("\nYou did not enter anything for the name of the file containing the list of the shapes and coordinates to use for the areas drawn on the image.")
-        print("You will have to re-draw these areas or press 'CTR + C' and re-run the program with a valid filename.")
-
-    # coulourmap name
-    if args.colourmap_name:
-        # if a value is input
-        try:
-            # check if the value is valid
-            mapper = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min_sensor_value, vmax=max_sensor_value), cmap=args.colourmap_name)
-            colourmap_name = args.colourmap_name
-
-        except ValueError:
-            print("\nThe colourmap name entered is not a valid colourmap. Please run this program again, entering a valid colourmap name.")
-            exit(0)
-
-    else:
-        # if a value is not input
-        pass
-        
-
-    # file of events
-    if args.events_file:
-        try:
-            with open(args.events_file, "r") as file:
-                file.read()
-
-        except FileNotFoundError:
-            print("\nThe file containing the events that happen during the duration of the video that you entered is not a valid file name.")
-            print(" Please run the program again with a valid file name")
-            exit(0)
-
-        except PermissionError:
-            print("\nThe file path you entered can not be accessed. Please check that you entered the correct path and re-run the program.")
-            exit(0)
-
-        try:
-            with open(args.events_file, "r") as file:
-                event = file.readline().strip()
-                tokens = event.split(" ")
-                int(tokens[0])
-
-        except ValueError:
-            print("\nThe file containing the events that happen during the duration of the video that you entered is not in the correct format.")
-            print("Please run the program again with a valid text file containing 2 tokens per line, a second and then text for an event seperated by a space.")
-            exit(0)
-
-    # folder of videos
-    if args.folder_of_videos:
-        # if value is input
-        try:
-            list_of_videos = [os.path.join(args.folder_of_videos, f) for f in os.listdir(args.folder_of_videos) if os.path.isfile(os.path.join(args.folder_of_videos, f))]
-
-        except:
-            print("\nThe folder_of_videos that you entered is not a valid folder name. Please run the program again with a valid folder name")
-            exit(0)
-
-    else:
-        list_of_videos = []
-
-    return folder, csv_files, output_filename, args.length_of_video, args.background_image_name, args.base_width, args.colourmap_name, args.shapes_filename, args.events_file, args.folder_of_videos, list_of_videos
-
-
-def obtain_variables_from_user():
-
-    # read in data
-    print("\nHello, Please enter a path to the csv/folder of csv files of minutes and sensor values?")
-    path = input()
-
-    if path:
-        # if value is input
-        folder, csv_files = get_list_of_csv_files(path)
-
-    else:
-        print("You did not enter a path. Please re-run this program and ensure to enter a valid path to a csv/folder of csvs.")
-        exit(0)
-
-    # background image
-    print("\nPlease enter the path to the image you want to use as the background to the heatmap.")
-    background_image_name = input()
-    if background_image_name:
-        # if value is input
-        try:
-            if cv2.imread(background_image_name).all() == None:
-                pass
-
-        except AttributeError:
-            print("\nThe path you supplied is invalid. Please run this program again and enter a valid path to an image.")
-            exit(0)
-
-    else:
-        print("\nYou did not enter a path to a background image. Please re-run this program and enter a valid path to a background image.")
-        exit(0)
-
-    print("\nTo set the following variables to default values: press 'Enter'.")
-
-    # video name
-    print("\nPlease enter the name/path you would like the output video to be labeled as")
-    x = input()
-    if x:
-        # if value is input
-        output_filename = touch_up_video_name(x)
-
-    else:
-        output_filename = default_output_filename
-
-    # length of video
-    print("\nThanks again, how long do you want the video to be? (in seconds)")
-    read_in = input()
-    if read_in:
-        # if value is input
-        try:
-            length_of_video = int(read_in)
-
-        except ValueError:
-            print("\nThis value must be an integer, please run this program again with a valid video length.")
-            exit(0)
-
-    else:
-        length_of_video = default_length_of_video
-
-    # base_width
-    print("\nPlease enter the number that you would like the width of the base of the background image to be when scaled.")
-    read_in = input()
-    if read_in:
-        # if value is input
-        try:
-            base_width = int(read_in)
-
-        except ValueError:
-            print("\nThis value must be an integer, please run this program again with a valid width.")
-            exit(0)
-
-    else:
-        base_width = default_base_width
-
-    # shapes filename
-    print("\nPlease enter the name of the file containing the list of the shapes and coordinates to use for the areas drawn on the image")
-    read_in = input()
-    if read_in:
-        # if value is input
-        if os.path.isfile(read_in):
-
-            try:
-                with open(args.shapes_filename, "r") as file:
-                    json.load(file)
-
-            except AttributeError:
-                print("\nCould not load in the contents of the file containing the list of the shapes and coordinates to use for the areas drawn on the image.\nPlease run this program again ensuring the format of the file is standard json format.")
-                exit(0)
-
-        else:
-            print("\nThe file containing the a list of the shapes and coordinates to use for the areas drawn on the image given does not exist. Please run this program again with a valid filename.")
-            exit(0)
-
-    shapes_filename = read_in
-
-    # colour map
-    print("\nPlease enter the name of the colourmap you would like to be used.")
-    read_in = input()
-    if read_in:
-        # if value is input
-        try:
-            matplotlib.cm.ScalarMappable(cmap=read_in)
-            colourmap_name = read_in
-
-        except ValueError:
-            print("\nThis value must be a valid name of a colour map, please run this program again fixing this error.")
-            exit(0)
-
-    else:
-        colourmap_name = default_colourmap_name
-
-    # file of events
-    print("\nPlease enter the name of the file containing the events that happen during the duration of the video. It should feature a second and the text describing the event seperated by a space and a new line for each event.")
-    events_file = input()
-    if events_file:
-        try:
-            with open(events_file, "r") as file:
-                file.read()
-
-        except FileNotFoundError:
-            print("\nThe file containing the events that happen during the duration of the video that you entered is not a valid file name.")
-            print(" Please run the program again with a valid file name")
-            exit(0)
-
-        try:
-            with open(events_file, "r") as file:
-                event = events.readline().strip()
-                while event:
-                    tokens = event.split(" ")
-                    time = int(tokens[0])
-
-        except ValueError:
-            print("\nThe file containing the events that happen during the duration of the video that you entered is not in the correct format.")
-            print("Please run the program again with a valid text file containing 2 tokens per line, a second and then text for an event seperated by a space.")
-            exit(0)
-
-    # folder of videos
-    print("\nPlease enter the nam of the folder containing the video footage taken from the cameras that the data in the csvs was taken from.")
-    folder_of_videos = input()
-    if folder_of_videos:
-        try:
-            list_of_videos = [os.path.join(folder_of_videos, f) for f in os.listdir(args.folder_of_videos) if os.path.isfile(os.path.join(args.folder_of_videos, f))]
-
-        except FileNotFoundError:
-            print("\nThe folder containing the videos that you entered is not a valid folder name. Please run the program again with a valid folder name")
-            exit(0)
-
-    print("\nOK, Making the video now, please wait.")
-
-    return folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos
-
-
 def reshape_background_image(img_name, base_width):
     """
     Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
@@ -708,26 +286,21 @@ def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
     return list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas
 
 
-def create_a_list_of_dataframes(folder, csv_files):
+def create_a_list_of_dataframes(csv_file_paths):
     """
     Function Goal : Read each csv into a DataFrame with 2 columns, Second and Sensor value, and add the DataFrame to a list
 
-    folder : string - either the name of the folder containing the csv files or an empty string
-    csv_files : list of strings - a list of the names of the csvs input
+    csv_file_paths : list of strings - a list of paths to the csvs input
 
     return : list of DataFrames
     """
 
     list_of_dfs = []
 
-    for csv in csv_files:
+    for csv_path in csv_file_paths:
 
-        if folder:
-            # read in 2 column data of Minute and sensor value
-            df = pd.read_csv(os.path.join(folder, csv), names=["Minute", "Sensor_value"])
-
-        else:
-            df = pd.read_csv(csv, names=["Minute", "Sensor_value"])
+        # read in 2 column data of Minute and sensor value
+        df = pd.read_csv(csv_path, names=["Minute", "Sensor_value"])
 
         # change the minute column to second
         df.Minute = df.Minute * 60
@@ -1762,39 +1335,33 @@ def main():
     print(start_time)
 
     # read in the variables
+    input_handler = HeatmapInputs()
+    start_read_time = time.time()
     if len(sys.argv) > 1:
-        folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = get_variables_from_command_line()
-        full_read_time = 0
-
+        heatmap_inputs = input_handler.get_variables_from_command_line()
     else:
-        start_read_time = time.time()
-        folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = obtain_variables_from_user()
+        heatmap_inputs = input_handler.get_variables_from_user()
+    full_read_time = time.time() - start_read_time
 
-        # folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_folder()
-        # folder, csv_files, output_filename, length_of_video, background_image_name, base_width, colourmap_name, shapes_filename, events_file, folder_of_videos, list_of_videos = set_variables_using_file()
+    csv_file_paths = heatmap_inputs.csv_file_path
+    video_file_paths = heatmap_inputs.video_file_paths
+    area_details = heatmap_inputs.area_details
+    event_details = heatmap_inputs.event_details
+    background_image_path = heatmap_inputs.background_image_path
+    output_file_name = heatmap_inputs.output_file_name
+    # WIP - will be removed once automate colourmap creation
+    colourmap_image_path = heatmap_inputs.colourmap_image_path
+    colourmap_name = heatmap_inputs.colourmap_name
 
-        full_read_time = time.time() - start_read_time
+    # deal with inputs
+    csv_names = [csv[:-10] for csv in csv_file_paths]
 
-    names = []
-    for csv in csv_files:
-        names.append(csv[:-10])
 
-    # draw the areas on the image
-    if shapes_filename:
-        full_draw_time = 0
-        with open(shapes_filename, "r") as file_of_shapes:
-            list_of_shapes_details = json.load(file_of_shapes)
-            print("\nUsing the areas contained in the file '{}'.".format(shapes_filename))
-
-    else:
-        start_draw_time = time.time()
-        list_of_shapes_details = drawing_images_program.main(len(csv_files), background_image_name, base_width)
-        full_draw_time = time.time() - start_draw_time
 
     # reshape the background
-    background = reshape_background_image(background_image_name, base_width)
+    background = reshape_background_image(background_image_path, base_width)
 
-    list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(list_of_shapes_details, background.shape)
+    list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(area_details, background.shape)
 
     """
     # rotate shape_arrays in list
@@ -1811,16 +1378,16 @@ def main():
     list_of_shape_arrays = new_list_of_shape_arrays
     """
 
-    if len(csv_files) != len(list_of_shape_arrays):
+    if len(csv_file_paths) != len(area_details):
         print("\nThe number of areas you drew and the number of csvs you supplied do not match. Please re-run the program drawing the same amount of areas on the image as csvs you supplied.")
         exit(0)
 
-    if len(csv_files) < len(list_of_videos):
+    if len(csv_file_paths) < len(video_file_paths):
         print("\nThe number of videos in the folder supplied is greater than the number of csvs you supplied. Please re-run the program inputting the same amount or less videos than csvs you supply.")
         exit(0)
 
     # turn the data into a dataframe
-    list_of_dfs = create_a_list_of_dataframes(folder, csv_files)
+    list_of_dfs = create_a_list_of_dataframes(csv_file_paths)
 
     if len(list_of_dfs) > 1:
         joined_df = join_dataframes(list_of_dfs)
@@ -1828,29 +1395,17 @@ def main():
     else:
         joined_df = list_of_dfs[0]
 
-    frames_per_second = calculate_frames_per_sec(len(joined_df.Second), length_of_video)
-
-    # create dictionary of events
-    dictionary_of_events = {}
-    if events_file:
-        with open(events_file, 'r') as events:
-            event = events.readline().strip()
-            while event:
-                tokens = event.split(" ")
-                time = int(tokens[0])
-                text = " ".join(tokens[1:])
-                dictionary_of_events[time] = text
-                event = events.readline().strip()
+    frames_per_second = calculate_frames_per_sec(len(joined_df.Second), video_length)
 
     event_duration_frame = int(frames_per_second * event_duration_sec)
 
-    if folder_of_videos:
+    if video_file_paths:
         # find out how many images will be on the lhs
-        num_of_images_on_lhs = len(list_of_videos) // 2
+        num_of_images_on_lhs = len(video_file_paths) // 2
 
         # create video caps
         read_videos = []
-        for vid in list_of_videos:
+        for vid in video_file_paths:
             #v = VideoReaderQueue(vid, queue_size=32)
             #img, num_of_frames = v.load_video()
             img = cv2.VideoCapture(vid)
@@ -1886,7 +1441,7 @@ def main():
     height_of_text_box = int(proportion_of_image_height_to_make_text_box * (border_colmap.shape[0] + background.shape[0]))
 
     # get the height of the video
-    if dictionary_of_events:
+    if event_details:
         height_of_video = (background.shape[0] + (2 * merged_image_border_width)) + border_colmap.shape[0] + (height_of_text_box + (2 * text_box_image_border_width))
 
     else:
@@ -1903,7 +1458,7 @@ def main():
     #print(width_of_video)
 
     # create the writer to write the image to the video
-    writer = cv2.VideoWriter(filename=output_filename, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=frames_per_second, frameSize=(width_of_video, height_of_video),
+    writer = cv2.VideoWriter(filename=output_file_name, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=frames_per_second, frameSize=(width_of_video, height_of_video),
                              isColor=True)
 
     import time
@@ -1932,10 +1487,10 @@ def main():
         start_turn_all_the_different_images_into_one_image = time.time()
 
         # merge these images with the image of the colourmap and of the second
-        merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, x_width_of_second_image, 
-                                                                    y_height_of_second_image, width_of_left_and_right_images, dictionary_of_events, 
-                                                                    event_duration_frame, names, list_of_centers, read_videos, num_of_images_on_lhs, 
-                                                                    list_of_shapes_details, height_of_text_box, list_of_colours, background_colour_of_areas)
+        merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, x_width_of_second_image,
+                                                                    y_height_of_second_image, width_of_left_and_right_images, event_details,
+                                                                    event_duration_frame, csv_names, list_of_centers, read_videos, num_of_images_on_lhs,
+                                                                    area_details, height_of_text_box, list_of_colours, background_colour_of_areas)
 
         turn_all_the_different_images_into_one_image_list.append(time.time() - start_turn_all_the_different_images_into_one_image)
 
@@ -1951,7 +1506,7 @@ def main():
         i = i + 1
 
     writer.release()
-    print("The video was written to the file with the name '" + output_filename + "'.")
+    print("The video was written to the file with the name '" + output_file_name + "'.")
 
     print("colourmap = {}".format(sum(colmap_creation)))
     print("loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = {}".format(
@@ -1971,7 +1526,7 @@ def main():
     print("border = {}".format(sum(border_list)))
 
     import time
-    print("Time taken = {}".format(time.time() - start_time - full_draw_time - full_read_time))
+    print("Time taken = {}".format(time.time() - start_time - full_read_time))
 
 
 if __name__ == '__main__':
