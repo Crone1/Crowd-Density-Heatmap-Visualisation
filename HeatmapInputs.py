@@ -65,13 +65,13 @@ class HeatmapInputs:
         file_paths = []
         for file_name in sorted(os.listdir(folder_path)):
             full_path = os.path.join(folder_path, file_name)
-            if is_file_with_valid_extension(full_path, "csv"):
+            if is_file_with_valid_extension(full_path, file_ext):
                 file_paths.append(full_path)
 
         # check the folder contains some CSV files
         exit_if_empty(
             file_paths,
-            error="The folder path entered points to a folder that doesn't contain any CSV files.",
+            error="The folder path entered points to a folder that doesn't contain any {} files.".format(file_ext),
             criteria=universal_criteria
         )
 
@@ -246,7 +246,7 @@ class HeatmapInputs:
 
         # process data
         self.csv_file_paths = self._get_file_paths(args.csv_folder, "csv")
-        self.video_file_paths = self._get_file_paths(args.videos_folder, "mp4")
+        self.video_file_paths = self._get_file_paths(args.video_folder, "mp4")
         self.background_image_path = self.process_background_image_path(args.background_image_path)
         self.output_file_name = self.process_output_file_name(args.output_file_name)
         if args.area_details_file_path == "draw":

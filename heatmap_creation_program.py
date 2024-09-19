@@ -244,8 +244,7 @@ def create_array_of_shape(shape_details, img_size):
 
     elif shape_details["type"] == "poly":
         points = shape_details["points"]
-        dataframe_means = np.mean(pd.DataFrame(points))
-        centre = (dataframe_means[0], dataframe_means[1])
+        centre = tuple(np.mean(pd.DataFrame(points), axis=0).astype(int))
 
         # draw 1's on array
         cv2.fillPoly(canvas, pts=np.int32([points]), color=value_in_mask)
@@ -340,8 +339,8 @@ def turn_dataframe_into_1_second_per_frame(df):
             # add this row to the new DataFrame
             new_df.loc[i] = [i] + list_of_averages
 
-        # fill the "Nan" values with the value encountered before the "Nan" up untill you hit the point where the rest of that column is only "Nan" values
-        filled_new_df = new_df.fillna(method="ffill")
+        # fill the "Nan" values with the value encountered before the "Nan" up until you hit the point where the rest of that column is only "Nan" values
+        filled_new_df = new_df.ffill()
 
     return filled_new_df
 
@@ -360,11 +359,11 @@ def join_dataframes(list_of_dfs):
     """
 
     join = pd.merge(list_of_dfs[0], list_of_dfs[1], left_on="Second", right_on="Second", how="outer")
-    join.set_axis(["Second"] + list(range(2)), axis=1, inplace=True)
+    join = join.set_axis(["Second"] + list(range(2)), axis=1)
 
     for i in range(2, len(list_of_dfs)):
         join = pd.merge(join, list_of_dfs[i], left_on="Second", right_on="Second", how="outer")
-        join.set_axis(join.columns.tolist()[:-1] + [i], axis=1, inplace=True)
+        join = join.set_axis(join.columns.tolist()[:-1] + [i], axis=1)
 
     # sort df by second column
     join["Second"] = join["Second"].astype("float")
@@ -386,7 +385,7 @@ def join_dataframes(list_of_dfs):
             j = j + 1
 
     # fill the "Nan" values with the value encountered before the "Nan" up untill you hit the point where the rest of that column is only "Nan" values
-    join = join.fillna(method="ffill")
+    join = join.ffill()
 
     # change the joined dataframe so that each row is 1 second by averaging out the values where there is more than 1 row for a particular second
     df_with_one_sec_per_row = turn_dataframe_into_1_second_per_frame(join.iloc[18000:18030, :])
@@ -698,8 +697,7 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
             for corner in corners:
                 moved_corners.append((corner[0] + width_to_move, corner[1] + height_to_move))
 
-            dataframe_means = np.mean(pd.DataFrame(moved_corners))
-            moved_center = (int(dataframe_means[0]), int(dataframe_means[1]))
+            moved_centre = np.mean(pd.DataFrame(moved_corners), axis=0).astype(int)
 
             closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_center)
 
