@@ -23,7 +23,24 @@ class DrawingInputs:
     def __init__(self):
         self.background_path = ""
         self.output_folder = default_area_details_folder
-        self.base_width = default_base_width
+        self.base_width = self._process_base_width(default_base_width)
+
+    @staticmethod
+    def _process_base_width(supplied_base_width):
+
+        universal_criteria = "the width entered for the base of the background image is a valid integer."
+        # check it's not empty
+        _exit_if_empty(supplied_base_width, error="The configured width for the base of the background image is empty.", criteria=universal_criteria)
+        # check it's an integer
+        _exit_if_try_fails(
+            int,
+            args=[supplied_base_width],
+            exception=ValueError,
+            error="The configured width for the base of the background image is not an integer.",
+            criteria=universal_criteria
+        )
+
+        return int(supplied_base_width)
 
     @staticmethod
     def _process_background_image_name(image_path):
@@ -69,23 +86,6 @@ class DrawingInputs:
 
         return folder_path
 
-    @staticmethod
-    def process_base_width(supplied_base_width):
-
-        universal_criteria = "the width entered for the base of the background image is a valid integer."
-        # check it's not empty
-        _exit_if_empty(supplied_base_width, error="You did not enter a valid width for the base of the background image.", criteria=universal_criteria)
-        # check it's an integer
-        _exit_if_try_fails(
-            int,
-            args=[supplied_base_width],
-            exception=ValueError,
-            error="You did not enter an integer for the width of the background image.",
-            criteria=universal_criteria
-        )
-
-        return supplied_base_width
-
     def get_variables_from_command_line(self):
 
         parser = argparse.ArgumentParser(description="The variables that make this programme work")
@@ -114,7 +114,6 @@ class DrawingInputs:
         # process data
         self.background_path = self._process_background_image_name(args.background_image_name)
         self.output_folder = self._process_output_folder(args.output_folder)
-        self.base_width = self.process_base_width(args.base_width)
 
     def get_variables_from_user(self):
 
@@ -137,12 +136,3 @@ class DrawingInputs:
             print("\nThe output folder has been set to the default - '{}'.".format(default_area_details_folder))
         else:
             self.output_folder = self._process_output_folder(supplied_output_folder)
-
-        # base width
-        print("\nPlease enter the width that the base of the background image to be scaled to.")
-        supplied_base_width = input()
-        if supplied_base_width != "\n":
-            self.base_width = self.process_base_width(supplied_base_width)
-        else:
-            self.base_width = default_base_width
-            print("\nThe width of image along the x-axis has been set to the default - {}.".format(default_base_width))

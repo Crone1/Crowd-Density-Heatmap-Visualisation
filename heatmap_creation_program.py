@@ -15,15 +15,6 @@ from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
 
 
-print(time.time())
-
-
-# read in default configuration variables
-with open("configs/default_configs.yaml", "r") as defaults_file:
-    default_configs = yaml.load(defaults_file, Loader=yaml.FullLoader)
-
-base_width = default_configs["default_base_width"]
-
 # read in customisation configuration variables
 with open("configs/heatmap_configs.yaml", "r") as variables:
     config_variables = yaml.load(variables, Loader=yaml.FullLoader)
