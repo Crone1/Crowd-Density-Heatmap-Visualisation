@@ -1130,22 +1130,22 @@ def main():
     input_handler = HeatmapInputs()
     start_read_time = time.time()
     if len(sys.argv) > 1:
-        heatmap_inputs = input_handler.get_variables_from_command_line()
+        input_handler.get_variables_from_command_line()
     else:
-        heatmap_inputs = input_handler.get_variables_from_user()
+        input_handler.get_variables_from_user()
     full_read_time = time.time() - start_read_time
 
-    csv_file_paths = heatmap_inputs.csv_file_path
-    video_file_paths = heatmap_inputs.video_file_paths
-    area_details = heatmap_inputs.area_details
-    event_details = heatmap_inputs.event_details
-    background_image_path = heatmap_inputs.background_image_path
-    output_file_name = heatmap_inputs.output_file_name
+    csv_file_paths = input_handler.csv_file_paths
+    video_file_paths = input_handler.video_file_paths
+    area_details = input_handler.area_details
+    event_details = input_handler.event_details
+    background_image_path = input_handler.background_image_path
+    output_file_name = input_handler.output_file_name
     # TODO: remove base_width
-    base_width = heatmap_inputs.base_width
+    base_width = input_handler.base_width
     # TODO: remove below once automate colourmap creation
-    colourmap_image_path = heatmap_inputs.colourmap_image_path
-    colourmap_name = heatmap_inputs.colourmap_name
+    colourmap_image_path = input_handler.colourmap_image_path
+    colourmap_name = input_handler.colourmap_name
 
     # deal with inputs
     csv_names = [csv[:-10] for csv in csv_file_paths]
