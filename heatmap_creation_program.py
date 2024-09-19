@@ -104,7 +104,7 @@ def create_array_of_shape(shape_details, img_size):
     shape_details : dictionary - the dictionary containing the details needed to identify the shape and it's coordinates on the image
     img_size : tuple (int, int, int) - the size of the image that the shapes are being drawn on
 
-    return : the array containing the 1's and 0's, the center point of the 1's
+    return : the array containing the 1's and 0's, the centre point of the 1's
     """
 
     value_in_mask = [0.5, 0.5, 0.5]
@@ -122,16 +122,16 @@ def create_array_of_shape(shape_details, img_size):
     if shape_details["type"] == "rectangle":
         start = tuple(shape_details["start"])
         end = tuple(shape_details["end"])
-        center = ((start[0] + end[0])/2, (start[1] + end[1])/2)
+        centre = ((start[0] + end[0])/2, (start[1] + end[1])/2)
 
         # draw 1's on array
-        cv2.rectangle(canvas, start, end, color=value_in_mask, thickness=cv2.FILLED)
+        cv2.rectangle(mask_canvas, start, end, color=value_in_mask, thickness=cv2.FILLED)
 
         # create an array of the outline of the area
         cv2.rectangle(outline_canvas, start, end, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
 
     elif shape_details["type"] == "circle":
-        center = tuple(shape_details["centre"])
+        centre = tuple(shape_details["centre"])
         radius = shape_details["radius"]
 
         # draw 1's on array
@@ -155,7 +155,7 @@ def create_array_of_shape(shape_details, img_size):
 
 def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
     """
-    Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centers in a list
+    Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centres in a list
 
     list_of_shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
     img_size : tuple (int, int, int) - the size of the background image that the masks are to be drawn on
@@ -165,14 +165,14 @@ def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
 
     list_of_shape_arrays = []
     list_of_outlines_of_shape_arrays = []
-    list_of_centers = []
+    list_of_centres = []
     for shape_details in list_of_shapes_details:
-        shape_array, center, outline_of_shape_array, background_colour_of_areas = create_array_of_shape(shape_details, img_size)
+        shape_array, centre, outline_of_shape_array, background_colour_of_areas = create_array_of_shape(shape_details, img_size)
         list_of_outlines_of_shape_arrays.append(outline_of_shape_array)
         list_of_shape_arrays.append(shape_array)
-        list_of_centers.append(center)
+        list_of_centres.append(centre)
 
-    return list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas
+    return list_of_shape_arrays, list_of_centres, list_of_outlines_of_shape_arrays, background_colour_of_areas
 
 
 def create_a_list_of_dataframes(csv_file_paths):
@@ -521,7 +521,7 @@ def generate_all_points_on_outside_of_shape(corners):
     return points
 
 
-def get_closest_point(corners, camera_point, center):
+def get_closest_point(corners, camera_point, centre):
     """
     Function Goal : get a list of all the points on the outside of shape and find the closest point on the outside to the point given
 
@@ -536,13 +536,13 @@ def get_closest_point(corners, camera_point, center):
     list_of_points_on_outside = generate_all_points_on_outside_of_shape(corners)
 
     cam_point = int(camera_point[0]), int(camera_point[1])
-    center_point = int(center[0]), int(center[1])
+    centre_point = int(centre[0]), int(centre[1])
 
-    coefficients_of_x_nd_y, constant = get_equation_of_line(center_point, cam_point)
+    coefficients_of_x_nd_y, constant = get_equation_of_line(centre_point, cam_point)
 
     for point in list_of_points_on_outside:
 
-        if (center[0] < camera_point[0] and center[0] < point[0] < camera_point[0]) or (center[0] > camera_point[0] and center[0] > point[0] > camera_point[0]):
+        if (centre[0] < camera_point[0] and centre[0] < point[0] < camera_point[0]) or (centre[0] > camera_point[0] and centre[0] > point[0] > camera_point[0]):
 
             intercept_of_points = np.array(coefficients_of_x_nd_y).dot(np.array([point[0], point[1]]))
 
@@ -579,14 +579,14 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
             moved_start = (start[0] + width_to_move, start[1] + height_to_move)
             moved_end = (end[0] + width_to_move, end[1] + height_to_move)
 
-            moved_center = ((moved_start[0] + moved_end[0])/2, (moved_start[1] + moved_end[1])/2)
+            moved_centre = ((moved_start[0] + moved_end[0])/2, (moved_start[1] + moved_end[1])/2)
 
             start_x_nd_end_y = (moved_start[0], moved_end[1])
             end_x_nd_start_y = (moved_end[0], moved_start[1])
 
             moved_corners = [moved_start, start_x_nd_end_y, moved_end, end_x_nd_start_y]
 
-            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_center)
+            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_centre)
 
         elif shape_details["type"] == "poly":
             corners = shape_details["points"]
@@ -597,17 +597,17 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
 
             moved_centre = np.mean(pd.DataFrame(moved_corners), axis=0).astype(int)
 
-            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_center)
+            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_centre)
 
         elif shape_details["type"] == "circle":
-            center = tuple(shape_details["centre"])
+            centre = tuple(shape_details["centre"])
             radius = shape_details["radius"]
 
-            moved_center = (center[0] + width_to_move, center[1] + height_to_move)
+            moved_centre = (centre[0] + width_to_move, centre[1] + height_to_move)
 
-            distance = get_distance(moved_center, list_of_camera_image_midpoints[i])
+            distance = get_distance(moved_centre, list_of_camera_image_midpoints[i])
 
-            closest = get_ratio_interval_point(moved_center, list_of_camera_image_midpoints[i], radius, distance-radius)
+            closest = get_ratio_interval_point(moved_centre, list_of_camera_image_midpoints[i], radius, distance-radius)
 
         # draw line for the arrow between the edge of the area to the camera footage frame
         cv2.line(image, list_of_camera_image_midpoints[i], closest, arrow_configs["line_colour"], thickness=arrow_configs["line_thickness"],
@@ -914,14 +914,14 @@ def create_image_of_second(second, x_width, y_height):
     return bordered_image
 
 
-def merge_to_one_image(list_of_images, background, list_of_centers, names, background_colour_of_areas):
+def merge_to_one_image(list_of_images, background, list_of_centres, names, canvas_element):
     """
     Function Goal : Take a list of arrays corresponding to the images of the areas on the background and merge these arrays so that this array corresponds to one image
                     of all the different areas and then add this image to the background to create one image
 
     list_of_images : list of arrays of integers - la ist of arrays corresponding to the images of the areas and their locations on the background
     background : 3D numpy array of integers - an array that corresponds to the background image of the shapes
-    list_of_centers : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the center points of each of the shapes
+    list_of_centres : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the centre points of each of the shapes
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
 
     return : 3D numpy array of integers - this array corresponds to the image of the different areas all overlaid on the background image
@@ -929,37 +929,38 @@ def merge_to_one_image(list_of_images, background, list_of_centers, names, backg
 
     background_image = np.copy(background).astype(np.float64, copy=False)/255
 
-    if background_colour_of_areas == [1, 1, 1]:
+    if canvas_element == [1, 1, 1]:
         canvas_of_just_the_shapes = np.ones((background.shape))
-
-    elif background_colour_of_areas == [0, 0, 0]:
+    elif canvas_element == [0, 0, 0]:
         canvas_of_just_the_shapes = np.zeros((background.shape))
+    else:
+        raise ValueError("Mask is made up of weird value")
 
     # create blank image with just the areas on it
     for img in list_of_images:
 
         # if the element of the blank canvas is already changed get the mean of the 2
-        canvas_of_just_the_shapes = np.where((img != background_colour_of_areas) & (canvas_of_just_the_shapes != background_colour_of_areas),
+        canvas_of_just_the_shapes = np.where((img != canvas_element) & (canvas_of_just_the_shapes != canvas_element),
                                              np.average(np.array([canvas_of_just_the_shapes, img]), axis=0), canvas_of_just_the_shapes)
 
         # if the element of the blank canvas is still blank
-        canvas_of_just_the_shapes = np.where((img != background_colour_of_areas) & (canvas_of_just_the_shapes == background_colour_of_areas), img,
+        canvas_of_just_the_shapes = np.where((img != canvas_element) & (canvas_of_just_the_shapes == canvas_element), img,
                                              canvas_of_just_the_shapes)
 
     # make a new array with the shapes on top of the background image
-    non_transparent_background_nd_shapes = np.where(canvas_of_just_the_shapes != background_colour_of_areas, canvas_of_just_the_shapes, background_image)
+    non_transparent_background_nd_shapes = np.where(canvas_of_just_the_shapes != canvas_element, canvas_of_just_the_shapes, background_image)
 
     transparent_background_nd_shapes = cv2.addWeighted(non_transparent_background_nd_shapes, background_configs["transparency_alpha"], background_image,
                                                        1-background_configs["transparency_alpha"], background_configs["transparency_gamma"])
 
-    for i in range(len(list_of_centers)):
+    for i, (centre_x, centre_y) in enumerate(list_of_centres):
 
         text = names[i]
 
         text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["areas"]["type"]], font_configs["areas"]["size"], font_configs["areas"]["thickness"])[0]
 
-        start_x_of_shape_name_text = int(list_of_centers[i][0] - text_width/2)
-        height_of_shape_name_text = int(list_of_centers[i][1] + text_height/2)
+        start_x_of_shape_name_text = int(centre_x - text_width/2)
+        height_of_shape_name_text = int(centre_y + text_height/2)
 
         cv2.putText(transparent_background_nd_shapes, text, (start_x_of_shape_name_text, height_of_shape_name_text), cv2_dict[font_configs["areas"]["type"]],
                     font_configs["areas"]["size"], font_configs["areas"]["colour"], lineType=cv2_dict[font_configs["areas"]["line_type"]], thickness=font_configs["areas"]["thickness"])
@@ -972,7 +973,7 @@ def merge_to_one_image(list_of_images, background, list_of_centers, names, backg
 
 
 def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, background, colourmap_image, df_of_row, x_width_of_second_image, y_height_of_second_image,
-                                                 width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, list_of_centers, read_videos,
+                                                 width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, list_of_centres, read_videos,
                                                  num_of_images_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours, background_colour_of_areas):
     """
     Function Goal : Get the images of the background, the shapes, the colourmap, the frame number, the camera footage videos and the bar plot image and merge these images
@@ -992,7 +993,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
                                                                                                           box at the top of the image.
     event_duration_frame : integer - the number of frames either side of the event to display the text for that event
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
-    list_of_centers : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the center points of each of the shapes
+    list_of_centres : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the centre points of each of the shapes
     read_videos : list of the camera footage videos read ins - a list of the variables for each different video to read in the next frame from
     num_of_images_on_lhs : integer - the number of camera footage videos on the left hand side of the middle heatmap image
     list_of-shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
@@ -1006,7 +1007,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
     merge_heatmap_start = time.time()
     # merge background and coloured shape images
-    shapes_nd_background_image = merge_to_one_image(list_of_coloured_shapes, background, list_of_centers, names, background_colour_of_areas)
+    shapes_nd_background_image = merge_to_one_image(list_of_coloured_shapes, background, list_of_centres, names, background_colour_of_areas)
 
     merge_heatmap.append(time.time() - merge_heatmap_start)
 
@@ -1155,7 +1156,7 @@ def main():
     # reshape the background
     background = reshape_background_image(background_image_path, base_width)
 
-    list_of_shape_arrays, list_of_centers, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(area_details, background.shape)
+    list_of_shape_arrays, list_of_centres, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(area_details, background.shape)
 
     """
     # rotate shape_arrays in list
@@ -1277,13 +1278,12 @@ def main():
         loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list.append(
             time.time() - start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images)
 
-        import time
         start_turn_all_the_different_images_into_one_image = time.time()
 
         # merge these images with the image of the colourmap and of the second
         merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, x_width_of_second_image,
                                                                     y_height_of_second_image, width_of_left_and_right_images, event_details,
-                                                                    event_duration_frame, csv_names, list_of_centers, read_videos, num_of_images_on_lhs,
+                                                                    event_duration_frame, csv_names, list_of_centres, read_videos, num_of_images_on_lhs,
                                                                     area_details, height_of_text_box, list_of_colours, background_colour_of_areas)
 
         turn_all_the_different_images_into_one_image_list.append(time.time() - start_turn_all_the_different_images_into_one_image)
