@@ -225,7 +225,7 @@ class HeatmapInputs:
         parser.add_argument(
             '-af',
             dest="area_details_file_path",
-            default=default_area_details_file,
+            default="default",
             nargs="?",
             type=str,
             required=False,
@@ -251,6 +251,9 @@ class HeatmapInputs:
         self.output_file_name = self.process_output_file_name(args.output_file_name)
         if args.area_details_file_path == "draw":
             self.area_details = drawing_program(self.background_image_path, self.base_width, default_area_details_folder)
+        elif args.area_details_file_path == "default":
+            output_file_name = add_extension(get_filename_no_extension(self.background_image_path), "json")
+            self.area_details = self._get_heatmap_area_details(os.path.join(default_area_details_folder, output_file_name))
         else:
             self.area_details = self._get_heatmap_area_details(args.area_details_file_path)
         if args.events_file_path != "none":
