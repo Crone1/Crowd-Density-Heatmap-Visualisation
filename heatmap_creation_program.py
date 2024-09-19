@@ -13,6 +13,7 @@ import cv2
 
 from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
+from maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 
 
 # read in customisation configuration variables
@@ -578,81 +579,6 @@ def create_bar_plot_image(row, x_width, y_height, names, list_of_colours_of_bars
     return bordered_image
 
 
-def cartesian_coordinates_to_polar_coordinates(point):
-    """
-    Function Goal : Turn a point into polar coordinates based on its location with respect to the origin (0,0)
-
-    point : a tuple of integers (int, int) - a point on the x-y plane
-
-    return : float, float - the distance between the point and the origin and the angle between a line from the point to the origin and the x axis
-    """
-
-    rho = np.sqrt(point[0]**2 + point[1]**2)
-    phi = np.arctan2(point[1], point[0])
-
-    return rho, phi
-
-
-def polar_coordinates_to_cartesian_coordinates(rho, phi):
-    """
-    Function Goal : Turn the polar coordinates into cartesian coordinates
-
-    rho : float - The distance from the output point to the origin (0,0)
-    phi : float - The angle between the a line from the output point to the origin and a line along the x-axis
-
-    return : a tuple of integers (int, int) - a point on the x-y plane
-    """
-
-    x = rho * np.cos(phi)
-    y = rho * np.sin(phi)
-
-    return (int(x), int(y))
-
-
-def get_point_that_divides_2_points_into_interval(p1, p2, a, b):
-    """
-    Function Goal : find the point that divides 2 points into the ratio a:b where dist(p1, point):dist(point, p2) is proportional to a:b
-
-    p1 : tuple of integers (int, int) - a point
-    p2 : tuple of integers (int, int) - a point
-    a : integer - ratio a
-    b : integer - ratio b
-
-    return : tuple of integers (int, int) - the point that divides the 2 points into the ration a:b
-    """
-
-    x = ((b * p1[0]) + (a * p2[0]))/(a + b)
-    y = ((b * p1[1]) + (a * p2[1]))/(a + b)
-
-    return (int(x), int(y))
-
-
-def dist_between_2_points(p1, p2):
-    """
-    Function Goal : get the distance between 2 points
-
-    p1 : tuple of integers (int, int) - a point
-    p2 : tuple of integers (int, int) - a point
-
-    return : integer - th distance between p1 and p2
-    """
-
-    return np.hypot(p1[0] - p2[0], p1[1] - p2[1])
-
-
-def get_slope(p1, p2):
-    """
-    Function Goal : Get the slope of a line going through 2 points
-
-    p1 : tuple of integers (int, int) - a point
-    p2 : tuple of integers (int, int) - a point
-
-    return : integer - the slope of the line going through the 2 points
-    """
-
-    return (p2[1] - p1[1])/(p2[0] - p1[0])
-
-
 def generate_all_points_on_outside_of_shape(corners):
     """
     Function Goal : To take the corners of the shape drawn and to use these to generate all the points that are on the outside permimeter of the shape drawn
@@ -696,27 +622,6 @@ def generate_all_points_on_outside_of_shape(corners):
         start_y = y
 
     return points
-
-
-def get_equation_of_line(point1, point2):
-    """
-    Functon Goal : This function gets the coefficients and the constants of the equation of a line passing through 2 points
-
-    point1 : a tuple of integers (int, int) - a point on the cartesian plane
-    point2 : a tuple of integers (int, int) - a point on the cartesian plane
-
-    return : a tuple of a list of integers and an integer ([int, int], int) - a list containing the coefficients for the x and y values in the equation of the line and the constant in the equation of the line
-    """
-
-    slope = get_slope(point1, point2)
-
-    x1, y1 = point1
-    x2, y2 = point2
-
-    coefficients_of_x_nd_y = [-slope, 1]
-    constant = y1 - (slope * x1)
-
-    return coefficients_of_x_nd_y, constant
 
 
 def get_closest_point(corners, camera_point, center):
@@ -804,9 +709,9 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
 
             moved_center = (center[0] + width_to_move, center[1] + height_to_move)
 
-            distance = dist_between_2_points(moved_center, list_of_camera_image_midpoints[i])
+            distance = get_distance(moved_center, list_of_camera_image_midpoints[i])
 
-            closest = get_point_that_divides_2_points_into_interval(moved_center, list_of_camera_image_midpoints[i], radius, distance-radius)
+            closest = get_ratio_interval_point(moved_center, list_of_camera_image_midpoints[i], radius, distance-radius)
 
         # draw line for the arrow between the edge of the area to the camera footage frame
         cv2.line(image, list_of_camera_image_midpoints[i], closest, colour_of_arrow_between_camera_nd_area, thickness=lineThickness_of_arrow_between_camera_nd_area,
@@ -815,13 +720,13 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
         # calculate the angle that the arrow head needs to be
         point_relative_to_point_on_shape = (list_of_camera_image_midpoints[i][0] - closest[0], list_of_camera_image_midpoints[i][1] - closest[1])
 
-        rho, pi = cartesian_coordinates_to_polar_coordinates(point_relative_to_point_on_shape)
+        rho, pi = convert_cartesian_to_polar(point_relative_to_point_on_shape)
 
         new_angles = [pi - angle_to_change_line_for_arrow_head, pi + angle_to_change_line_for_arrow_head]
 
         # draw the lines for the arrow head
         for angle in new_angles:
-            x, y = polar_coordinates_to_cartesian_coordinates(length_of_arrow_head_lines, angle)
+            x, y = convert_polar_to_cartesian(length_of_arrow_head_lines, angle)
 
             cv2.line(image, (closest[0] + x, closest[1] + y), closest, colour_of_arrow_between_camera_nd_area,
                      thickness=lineThickness_of_arrow_between_camera_nd_area, lineType=lineType_of_arrow_between_camera_nd_area)
