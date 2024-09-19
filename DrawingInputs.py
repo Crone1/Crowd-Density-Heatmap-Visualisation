@@ -5,7 +5,7 @@ import os.path
 import cv2
 import yaml
 
-from utils import _exit_if_empty, _exit_if_try_fails
+from utils.input_utils import exit_if_empty, exit_if_try_fails
 
 
 # read in YAML configuration file
@@ -30,9 +30,9 @@ class DrawingInputs:
 
         universal_criteria = "the width entered for the base of the background image is a valid integer."
         # check it's not empty
-        _exit_if_empty(supplied_base_width, error="The configured width for the base of the background image is empty.", criteria=universal_criteria)
+        exit_if_empty(supplied_base_width, error="The configured width for the base of the background image is empty.", criteria=universal_criteria)
         # check it's an integer
-        _exit_if_try_fails(
+        exit_if_try_fails(
             int,
             args=[supplied_base_width],
             exception=ValueError,
@@ -47,7 +47,7 @@ class DrawingInputs:
 
         universal_criteria = "the path to the background image points to a valid image file."
         # check it's not empty
-        _exit_if_empty(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
+        exit_if_empty(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
 
         # check the path exists
         if os.path.exists(image_path):
@@ -63,7 +63,7 @@ class DrawingInputs:
             exit(0)
 
         # check the file is an image file
-        _exit_if_try_fails(
+        exit_if_try_fails(
             cv2.imread,
             args=[verified_image_path],
             exception=AttributeError,
@@ -78,11 +78,11 @@ class DrawingInputs:
 
         universal_criteria = "the path entered points to an existing folder."
         # check it's not empty
-        _exit_if_empty(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
+        exit_if_empty(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
         # check the path exists
-        _exit_if_empty(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
+        exit_if_empty(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
         # check the path is a directory
-        _exit_if_empty(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
+        exit_if_empty(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
 
         return folder_path
 

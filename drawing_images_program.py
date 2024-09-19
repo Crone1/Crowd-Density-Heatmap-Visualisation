@@ -14,7 +14,7 @@ import sys
 import os
 
 from DrawingInputs import DrawingInputs
-from utils import _add_extension, _get_filename_no_extension
+from utils.file_utils import add_extension, get_filename_no_extension
 
 
 # read in YAML configuration file
@@ -264,7 +264,7 @@ def main(background_image_path, base_width, output_folder):
     area_details = draw_on_image(background, line_thickness)
 
     # output to file
-    output_file_name = _add_extension(_get_filename_no_extension(background_image_path), "json")
+    output_file_name = add_extension(get_filename_no_extension(background_image_path), "json")
     output_path = os.path.join(output_folder, output_file_name)
     with open(output_path, 'w') as file_of_area_details:
         file_of_area_details.write(json.dumps(area_details))

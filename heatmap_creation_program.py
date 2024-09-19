@@ -13,7 +13,7 @@ import cv2
 
 from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
-from maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
+from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 
 
 # read in customisation configuration variables

@@ -6,7 +6,8 @@ import yaml
 import os
 
 from drawing_images_program import main as drawing_program
-from utils import _add_extension, _exit_if_empty, _exit_if_try_fails, _get_filename_no_extension, _is_file_with_valid_extension
+from utils.file_utils import add_extension, get_filename_no_extension, is_file_with_valid_extension
+from utils.input_utils import exit_if_empty, exit_if_try_fails
 
 
 # read in default configuration variables
@@ -54,21 +55,21 @@ class HeatmapInputs:
 
         universal_criteria = "the path entered points to a folder containing '.{}' files.".format(file_ext)
         # check it's not empty
-        _exit_if_empty(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
+        exit_if_empty(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
         # check the path exists
-        _exit_if_empty(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
+        exit_if_empty(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
         # check the path is a directory
-        _exit_if_empty(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
+        exit_if_empty(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
 
         # extract the file paths from the folder
         file_paths = []
         for file_name in sorted(os.listdir(folder_path)):
             full_path = os.path.join(folder_path, file_name)
-            if _is_file_with_valid_extension(full_path, "csv"):
+            if is_file_with_valid_extension(full_path, "csv"):
                 file_paths.append(full_path)
 
         # check the folder contains some CSV files
-        _exit_if_empty(
+        exit_if_empty(
             file_paths,
             error="The folder path entered points to a folder that doesn't contain any CSV files.",
             criteria=universal_criteria
@@ -81,13 +82,13 @@ class HeatmapInputs:
 
         universal_criteria = "the path to the background image points to a valid image file."
         # check it's not empty
-        _exit_if_empty(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
+        exit_if_empty(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
         # check the path exists
-        _exit_if_empty(os.path.exists(image_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_empty(os.path.exists(image_path), error="The file path entered does not exist.", criteria=universal_criteria)
         # check the path is a file
-        _exit_if_empty(os.path.isfile(image_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_empty(os.path.isfile(image_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
         # check the file is an image file
-        _exit_if_try_fails(
+        exit_if_try_fails(
             cv2.imread,
             args=[image_path],
             exception=AttributeError,
@@ -102,25 +103,25 @@ class HeatmapInputs:
 
         universal_criteria = "the name for the file the created video will be saved to is valid."
         # check it's not empty
-        _exit_if_empty(file_name, error="You did not enter a valid file name.", criteria=universal_criteria)
+        exit_if_empty(file_name, error="You did not enter a valid file name.", criteria=universal_criteria)
 
-        return _add_extension(file_name, "mp4")
+        return add_extension(file_name, "mp4")
 
     @staticmethod
     def _get_heatmap_area_details(file_path):
 
         universal_criteria = "the path to the file containing details of the heatmap areas points to a valid json file."
         # check it's not empty
-        _exit_if_empty(file_path, error="You did not enter a valid path to a json file.", criteria=universal_criteria)
+        exit_if_empty(file_path, error="You did not enter a valid path to a json file.", criteria=universal_criteria)
         # check the path exists
-        _exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
         # check the path is a file
-        _exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
         # check it's a json file
         def _load_json(file_path):
             with open(file_path, "r") as file:
                 return json.load(file)
-        _exit_if_try_fails(
+        exit_if_try_fails(
             _load_json,
             args=[file_path],
             exception=(AttributeError, ValueError),
@@ -128,7 +129,7 @@ class HeatmapInputs:
             criteria=universal_criteria
         )
         # check json file is not empty
-        _exit_if_empty(_load_json(file_path), error="The file path entered points to an empty json file.", criteria=universal_criteria)
+        exit_if_empty(_load_json(file_path), error="The file path entered points to an empty json file.", criteria=universal_criteria)
 
         # extract area details from file
         return _load_json(file_path)
@@ -138,16 +139,16 @@ class HeatmapInputs:
 
         universal_criteria = "the path to the file containing details of the events points to a valid text file."
         # check it's not empty
-        _exit_if_empty(file_path, error="You did not enter a valid path to a text file.", criteria=universal_criteria)
+        exit_if_empty(file_path, error="You did not enter a valid path to a text file.", criteria=universal_criteria)
         # check the path exists
-        _exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
         # check the path is a file
-        _exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
         # check it's a readable file
         def _read_file(path):
             with open(path, "r") as file:
                 return file.readlines()
-        _exit_if_try_fails(
+        exit_if_try_fails(
             _read_file,
             args=[file_path],
             exception=PermissionError,
@@ -157,7 +158,7 @@ class HeatmapInputs:
         # check it's the correct format
         def _check_first_token_is_int(path):
             int(_read_file(path)[0].strip().split(" ")[0])
-        _exit_if_try_fails(
+        exit_if_try_fails(
             _check_first_token_is_int,
             args=[file_path],
             exception=ValueError,
@@ -292,7 +293,7 @@ class HeatmapInputs:
         )
         supplied_area_details_file_path = input()
         if supplied_area_details_file_path == "\n":
-            output_file_name = _add_extension(_get_filename_no_extension(self.background_image_path), "json")
+            output_file_name = add_extension(get_filename_no_extension(self.background_image_path), "json")
             supplied_area_details_file_path = os.path.join(default_area_details_folder, output_file_name)
             print("\nThe path to the file containing the data on the heatmap areas drawn on the image has been set to the default - '{}'.".format(supplied_area_details_file_path))
         if supplied_area_details_file_path == "draw":
