@@ -1,151 +1,154 @@
 ---
 
-# values needed for merging the shapes areas and the background
-alpha_for_transperancy_of_shapes_on_background: 0.5
-gamma_for_merging_shapes_and_background: 0
-
-# the max and minimum values of the colours on the colourmap
-max_sensor_value: 100
-min_sensor_value: 0
-
-# arrow
-lineType_of_arrow_between_camera_nd_area: 8
-lineThickness_of_arrow_between_camera_nd_area: 2
-colour_of_arrow_between_camera_nd_area: [0, 0, 0]
-num_points_on_line_for_outside_of_shape: 500
-
-# how long should the events in the text box at the top be on screen for
-event_duration_sec: 2     # in seconds
-
-# when data runs out for a particular shape it will be this colour
-colour_of_Nan_values: [130, 130, 140]
-
-sensor_value_name: "Crowd density"
-
-# ----------This next section contains the setings to do with the widths and heights of each extra feature on screen-------------------------------------------------------
-# ALL VALUES SHOULD BE BETWEEN 0 AND 1
-
-# colourmap and second image
-proportion_of_image_height_to_make_colourmap_and_second_image: 0.25
-proportion_of_base_width_to_make_second_image: 0.15                  # the width of the colourmap is "1 - this number"
+# describe the data
+data_specific:
+  title: "Crowd Density"
+  min_value: 0
+  max_value: 100
 
 
-inner_colourmap_image_border_type: BORDER_CONSTANT
-inner_colourmap_image_border_colour: [1,1,1]
-proportion_of_width_to_make_inner_colourmap_horizontal_border: 0.06
-proportion_of_height_to_make_inner_colourmap_bottom_border: 0.06
-proportion_of_height_to_make_inner_colourmap_top_border: 0.1
-
-colour_of_lines_for_scale_on_colourmap: [0,0,0]
-colour_of_line_seperating_colmap_header_and_colmap: [0, 0, 0]
-
-proportion_of_colourmap_image_to_make_indexes: 0.225
-proportion_of_colourmap_image_to_make_heading: 0.275
-proportion_of_height_to_make_space_between_line_and_text: 0.06
-
-font_type_of_heading_on_colourmap: FONT_HERSHEY_SIMPLEX
-font_size_of_heading_on_colourmap: 0.6
-font_thickness_of_heading_on_colourmap: 1
-colour_of_heading_on_colourmap: [0,0,0]
-line_type_of_heading_on_colourmap: 1
-
-font_type_of_index_on_colourmap: FONT_HERSHEY_SIMPLEX
-font_size_of_index_on_colourmap: 0.5
-font_thickness_of_index_on_colourmap: 1
-colour_of_index_on_colourmap: [0,0,0]
-line_type_of_index_on_colourmap: 1
+# describe video resolutions
+video_resolutions:
+  360p: [640, 360]
+  480p: [640, 480]
+  720p: [1280, 720]
+  1080p: [1920, 1080]
+  1440p: [2560, 1440]
+  2160p: [3840, 2160]
+  4320p: [7680, 4320]
 
 
+# configure the output video
+video_specific:
+  length: 300
+  resolution: 1080p
 
 
-# left and right camera videos
-proportion_of_base_width_to_make_the_left_and_right_images: 0.6
-
-# arrows
-angle_to_change_line_for_arrow_head: 0.78
-length_of_arrow_head_lines: 15
-
-# text box at the top
-proportion_of_image_height_to_make_text_box: 0.15
-
-
-# ----------This next section contains settings to do with the border-----------------------------------------------------------------------------------------------------
-
-# border of areas
-colour_of_outline_of_areas: [0, 0, 0]         # black
-thickness_of_outline_on_areas: 2
-
-# colour map
-colmap_border_width: 1
-colmap_border_colour: [0, 0, 0]               # black
-colmap_border_type: BORDER_CONSTANT
-
-# second
-second_image_border_width: 1
-second_image_border_colour: [0, 0, 0]         # black
-second_image_border_type: BORDER_CONSTANT
-
-# merged background and shapes
-merged_image_border_width: 1
-merged_image_border_colour: [0, 0, 0]         # black
-merged_image_border_type: BORDER_CONSTANT
-
-# text box at the top
-text_box_image_border_width: 1
-text_box_image_border_colour: [0, 0, 0]       # black
-text_box_image_border_type: BORDER_CONSTANT
-
-# bar plot
-bar_plot_border_width: 1
-bar_plot_border_colour: [0, 0, 0]             # black
-bar_plot_border_type: BORDER_CONSTANT
-
-# videos
-video_footage_border_width: 1
-video_footage_border_colour: [0, 0, 0]        # black
-video_footage_border_type: BORDER_CONSTANT
+# configure video proportions
+video_proportions:
+  height:
+    events_box: 0.11
+    background: 0.71
+    colourmap: 0.18
+  width:
+    background: 0.46
+    cameras: 0.27  # x2 for LHS & RHS
+    colourmap: 0.39
+    timer: 0.7
 
 
-# ----------This next section contains settings to do with the text that is written on the programme------------------------------------------------------------------------
+# configure components
+borders:
+  background:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
+  bar_plot:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
+  cameras:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
+  colourmap:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
+  event_box:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
+  timer:
+    colour: [0, 0, 0]
+    type: BORDER_CONSTANT
+    width: 1
 
-# second image
-font_size_of_second_image: 1
-font_type_of_second_image: FONT_HERSHEY_PLAIN
-line_type_of_second_image: LINE_AA
-font_thickness_of_second_image: 1
-colour_of_second_image_text: [0, 0, 0]                # black
+fonts:
+  areas:
+    colour: [0, 0, 0]
+    size: 1
+    thickness: 1
+    type: FONT_HERSHEY_SIMPLEX
+    line_type: LINE_AA
+  cameras:  # text on video if video ends - "No Data"
+    colour: [1, 1, 1]
+    size: 3
+    thickness: 3
+    type: FONT_HERSHEY_SIMPLEX
+    line_type: LINE_AA
+  event_box:
+    colour: [0, 0, 0]
+    size: 2
+    thickness: 1
+    type: FONT_HERSHEY_SIMPLEX
+    line_type: LINE_AA
+  timer:
+    colour: [0, 0, 0]
+    size: 1
+    thickness: 1
+    type: FONT_HERSHEY_PLAIN
+    line_type: LINE_AA
 
-# text at top
-font_size_of_top_text: 2
-font_type_of_top_text: FONT_HERSHEY_SIMPLEX
-line_type_of_top_text: LINE_AA
-font_thickness_of_top_text: 1
-colour_of_top_text: [0, 0, 0]                         # black
 
-# colourmap image
-font_size_of_text_of_scale_of_colourmap_image: 1
-font_type_of_text_of_scale_of_colourmap_image: FONT_HERSHEY_SIMPLEX
-line_type_of_text_of_scale_of_colourmap_image: LINE_AA
-font_thickness_of_text_of_scale_of_colourmap_image: 1
-colour_of_text_of_scale_of_colourmap_image: [0, 0, 0]   # black
-colour_of_lines_for_scale_on_colourmap: [0 ,0 ,0]       # black
-inner_colourmap_colour: [1, 1, 1]                       # white
+# configurate arrows from cameras to areas
+arrows:
+  line_type: 8
+  line_thickness: 2
+  line_colour: [0, 0, 0]
+  points_on_line: 500
+  head_angle: 0.78
+  head_length: 15
 
 
-inner_colourmap_border_width_horizontal: 50
-inner_colourmap_border_width_verticle: 15
+# configure background
+background:
+  outline_colour: [0, 0, 0]
+  outline_thickness: 2
+  transparency_alpha: 0.5
+  transparency_gamma: 0
+  colour_when_nan: [130, 130, 140]
 
 
-# label on each shape of its name
-font_size_of_shape_name_text: 1
-font_type_of_shape_name_text: FONT_HERSHEY_SIMPLEX
-line_type_of_shape_name_text: LINE_AA
-font_thickness_of_shape_name_text: 1
-colour_of_shape_name_text: [0, 0, 0]                  # black
+# configurate colourmap construction
+colourmap:
+  name: plasma
+  proportions:
+    height:
+      inner_border_bottom: 0.06
+      inner_border_top: 0.1
+      index: 0.225
+      heading: 0.275
+      line_and_text_gap: 0.06
+    width:
+      inner_border: 0.1
+  borders:
+    inner:
+      colour: [1, 1, 1]
+      type: BORDER_CONSTANT
+  fonts:
+    heading:
+      colour: [0, 0, 0]
+      size: 0.6
+      thickness: 1
+      type: FONT_HERSHEY_SIMPLEX
+      line_type: 1
+    index:
+      colour: [0, 0, 0]
+      size: 0.5
+      thickness: 1
+      type: FONT_HERSHEY_SIMPLEX
+      line_type: LINE_AA
+    scale:
+      colour: [0, 0, 0]
+      size: 1
+      thickness: 1
+      type: FONT_HERSHEY_SIMPLEX
+      line_type: LINE_AA
+    seperator:
+      colour: [0, 0, 0]
 
-# text on video if video ends - "No Data"
-font_size_of_camera_footage_text: 3
-font_type_of_camera_footage_text: FONT_HERSHEY_SIMPLEX
-line_type_of_camera_footage_text: LINE_AA
-font_thickness_of_camera_footage_text: 3
-colour_of_camera_footage_text: [1, 1, 1]              # white
+
+# configurate events text box
+events_box:
+  text_duration: 2

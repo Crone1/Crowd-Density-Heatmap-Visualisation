@@ -10,19 +10,13 @@ import time
 import sys
 import cv2
 
-
 from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 
 
-# read in customisation configuration variables
-with open("configs/heatmap_configs.yaml", "r") as variables:
-    config_variables = yaml.load(variables, Loader=yaml.FullLoader)
-
-
 # dictionary to use built in openCV variables
-cv2_dic = {
+cv2_dict = {
 
     "BORDER_REPLICATE": cv2.BORDER_REPLICATE,
     "BORDER_CONSTANT": cv2.BORDER_CONSTANT,
@@ -43,113 +37,23 @@ cv2_dic = {
     "LINE_AA": cv2.LINE_AA,
 }
 
-sensor_value_name = config_variables["sensor_value_name"]
 
-# other global variables
-alpha_for_transperancy_of_shapes_on_background = config_variables["alpha_for_transperancy_of_shapes_on_background"]
-gamma_for_merging_shapes_and_background = config_variables["gamma_for_merging_shapes_and_background"]
+# read the heatmap customisation configuration variables
+with open("configs/heatmap_configs.yaml", "r") as config_file:
+    heatmap_configs = yaml.load(config_file, Loader=yaml.FullLoader)
 
-max_sensor_value = config_variables["max_sensor_value"]
-min_sensor_value = config_variables["min_sensor_value"]
+data_configs = heatmap_configs["data_specific"]
+video_configs = heatmap_configs["video_specific"]
+video_proportion_configs = heatmap_configs["video_proportions"]
 
-colour_of_Nan_values = config_variables["colour_of_Nan_values"]
+border_configs = heatmap_configs["borders"]
+font_configs = heatmap_configs["fonts"]
 
-event_duration_sec = config_variables["event_duration_sec"]
-video_length = config_variables["default_video_length_sec"]
+arrow_configs = heatmap_configs["arrows"]
+background_configs = heatmap_configs["background"]
+colourmap_configs = heatmap_configs["colourmap"]
+event_box_configs = heatmap_configs["events_box"]
 
-lineType_of_arrow_between_camera_nd_area = config_variables["lineType_of_arrow_between_camera_nd_area"]
-lineThickness_of_arrow_between_camera_nd_area = config_variables["lineThickness_of_arrow_between_camera_nd_area"]
-colour_of_arrow_between_camera_nd_area = config_variables["colour_of_arrow_between_camera_nd_area"]
-
-angle_to_change_line_for_arrow_head = config_variables["angle_to_change_line_for_arrow_head"]
-length_of_arrow_head_lines = config_variables["length_of_arrow_head_lines"]
-num_points_on_line_for_outside_of_shape = config_variables["num_points_on_line_for_outside_of_shape"]
-
-proportion_of_image_height_to_make_text_box = config_variables["proportion_of_image_height_to_make_text_box"]
-proportion_of_base_width_to_make_second_image = config_variables["proportion_of_base_width_to_make_second_image"]
-proportion_of_image_height_to_make_colourmap_and_second_image = config_variables["proportion_of_image_height_to_make_colourmap_and_second_image"]
-proportion_of_base_width_to_make_the_left_and_right_images = config_variables["proportion_of_base_width_to_make_the_left_and_right_images"]
-
-
-inner_colourmap_image_border_type = cv2_dic[config_variables["inner_colourmap_image_border_type"]]
-inner_colourmap_image_border_colour = config_variables["inner_colourmap_image_border_colour"]
-proportion_of_width_to_make_inner_colourmap_horizontal_border = config_variables["proportion_of_width_to_make_inner_colourmap_horizontal_border"]
-
-proportion_of_height_to_make_inner_colourmap_bottom_border = config_variables["proportion_of_height_to_make_inner_colourmap_bottom_border"]
-proportion_of_height_to_make_inner_colourmap_top_border = config_variables["proportion_of_height_to_make_inner_colourmap_top_border"]
-
-colour_of_lines_for_scale_on_colourmap = config_variables["colour_of_lines_for_scale_on_colourmap"]
-colour_of_line_seperating_colmap_header_and_colmap = config_variables["colour_of_line_seperating_colmap_header_and_colmap"]
-
-proportion_of_colourmap_image_to_make_indexes = config_variables["proportion_of_colourmap_image_to_make_indexes"]
-proportion_of_colourmap_image_to_make_heading = config_variables["proportion_of_colourmap_image_to_make_heading"]
-proportion_of_height_to_make_space_between_line_and_text = config_variables["proportion_of_height_to_make_space_between_line_and_text"]
-
-font_type_of_heading_on_colourmap = cv2_dic[config_variables["font_type_of_heading_on_colourmap"]]
-font_size_of_heading_on_colourmap = config_variables["font_size_of_heading_on_colourmap"]
-font_thickness_of_heading_on_colourmap = config_variables["font_thickness_of_heading_on_colourmap"]
-colour_of_heading_on_colourmap = config_variables["colour_of_heading_on_colourmap"]
-line_type_of_heading_on_colourmap = config_variables["line_type_of_heading_on_colourmap"]
-
-font_type_of_index_on_colourmap = cv2_dic[config_variables["font_type_of_index_on_colourmap"]]
-font_size_of_index_on_colourmap = config_variables["font_size_of_index_on_colourmap"]
-font_thickness_of_index_on_colourmap = config_variables["font_thickness_of_index_on_colourmap"]
-colour_of_index_on_colourmap = config_variables["colour_of_index_on_colourmap"]
-line_type_of_index_on_colourmap = config_variables["line_type_of_index_on_colourmap"]
-
-
-# borders---------------------------------
-colour_of_outline_of_areas = config_variables["colour_of_outline_of_areas"]
-thickness_of_outline_on_areas = config_variables["thickness_of_outline_on_areas"]
-
-colmap_border_width = config_variables["colmap_border_width"]
-colmap_border_colour = config_variables["colmap_border_colour"]
-colmap_border_type = cv2_dic[config_variables["colmap_border_type"]]
-
-second_image_border_width = config_variables["second_image_border_width"]
-second_image_border_colour = config_variables["second_image_border_colour"]
-second_image_border_type = cv2_dic[config_variables["second_image_border_type"]]
-
-merged_image_border_width = config_variables["merged_image_border_width"]
-merged_image_border_colour = config_variables["merged_image_border_colour"]
-merged_image_border_type = cv2_dic[config_variables["merged_image_border_type"]]
-
-bar_plot_border_width = config_variables["bar_plot_border_width"]
-bar_plot_border_colour = config_variables["bar_plot_border_colour"]
-bar_plot_border_type = cv2_dic[config_variables["bar_plot_border_type"]]
-
-text_box_image_border_width = config_variables["text_box_image_border_width"]
-text_box_image_border_colour = config_variables["text_box_image_border_colour"]
-text_box_image_border_type = cv2_dic[config_variables["text_box_image_border_type"]]
-
-video_footage_border_width = config_variables["video_footage_border_width"]
-video_footage_border_colour = config_variables["video_footage_border_colour"]
-video_footage_border_type = cv2_dic[config_variables["video_footage_border_type"]]
-
-# Text of images----------------------
-font_size_of_second_image = config_variables["font_size_of_second_image"]
-font_type_of_second_image = cv2_dic[config_variables["font_type_of_second_image"]]
-line_type_of_second_image = cv2_dic[config_variables["line_type_of_second_image"]]
-font_thickness_of_second_image = config_variables["font_thickness_of_second_image"]
-colour_of_second_image_text = config_variables["colour_of_second_image_text"]
-
-font_size_of_top_text = config_variables["font_size_of_top_text"]
-font_type_of_top_text = cv2_dic[config_variables["font_type_of_top_text"]]
-line_type_of_top_text = cv2_dic[config_variables["line_type_of_top_text"]]
-font_thickness_of_top_text = config_variables["font_thickness_of_top_text"]
-colour_of_top_text = config_variables["colour_of_top_text"]
-
-font_size_of_shape_name_text = config_variables["font_size_of_shape_name_text"]
-font_type_of_shape_name_text = cv2_dic[config_variables["font_type_of_shape_name_text"]]
-line_type_of_shape_name_text = cv2_dic[config_variables["line_type_of_shape_name_text"]]
-font_thickness_of_shape_name_text = config_variables["font_thickness_of_shape_name_text"]
-colour_of_shape_name_text = config_variables["colour_of_shape_name_text"]
-
-font_size_of_camera_footage_text = config_variables["font_size_of_camera_footage_text"]
-font_type_of_camera_footage_text = cv2_dic[config_variables["font_type_of_camera_footage_text"]]
-line_type_of_camera_footage_text = cv2_dic[config_variables["line_type_of_camera_footage_text"]]
-font_thickness_of_camera_footage_text = config_variables["font_thickness_of_camera_footage_text"]
-colour_of_camera_footage_text = config_variables["colour_of_camera_footage_text"]
 
 # lists for timing everything
 loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list = []
@@ -206,20 +110,14 @@ def create_array_of_shape(shape_details, img_size):
     value_in_mask = [0.5, 0.5, 0.5]
 
     # sort colours for making areas and outlines
-    if colour_of_outline_of_areas == [1, 1, 1]:
-        outline_canvas = np.zeros(img_size)
-        canvas = np.zeros(img_size)
-        background_colour_of_areas = [0, 0, 0]
-
-    elif colour_of_outline_of_areas == [0, 0, 0]:
+    if background_configs["outline_colour"] == [0, 0, 0]:
         outline_canvas = np.ones(img_size)
-        canvas = np.ones(img_size)
-        background_colour_of_areas = [1, 1, 1]
-
+        mask_canvas = np.ones(img_size)
+        canvas_element = [1, 1, 1]
     else:
         outline_canvas = np.zeros(img_size)
-        canvas = np.zeros(img_size)
-        background_colour_of_areas = [0, 0, 0]
+        mask_canvas = np.zeros(img_size)
+        canvas_element = [0, 0, 0]
 
     if shape_details["type"] == "rectangle":
         start = tuple(shape_details["start"])
@@ -230,29 +128,29 @@ def create_array_of_shape(shape_details, img_size):
         cv2.rectangle(canvas, start, end, color=value_in_mask, thickness=cv2.FILLED)
 
         # create an array of the outline of the area
-        cv2.rectangle(outline_canvas, start, end, color=colour_of_outline_of_areas, thickness=thickness_of_outline_on_areas)
+        cv2.rectangle(outline_canvas, start, end, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
 
     elif shape_details["type"] == "circle":
         center = tuple(shape_details["centre"])
         radius = shape_details["radius"]
 
         # draw 1's on array
-        cv2.circle(canvas, center, radius, color=value_in_mask, thickness=cv2.FILLED)
+        cv2.circle(mask_canvas, centre, radius, color=value_in_mask, thickness=cv2.FILLED)
 
         # create an array of the outline of the area
-        cv2.circle(outline_canvas, center, radius, color=colour_of_outline_of_areas, thickness=thickness_of_outline_on_areas)
+        cv2.circle(outline_canvas, centre, radius, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
 
     elif shape_details["type"] == "poly":
         points = shape_details["points"]
         centre = tuple(np.mean(pd.DataFrame(points), axis=0).astype(int))
 
         # draw 1's on array
-        cv2.fillPoly(canvas, pts=np.int32([points]), color=value_in_mask)
+        cv2.fillPoly(mask_canvas, pts=np.int32([points]), color=value_in_mask)
 
         # create an array of the outline of the area
-        cv2.polylines(outline_canvas, pts=np.int32([points]), isClosed=True, color=colour_of_outline_of_areas, thickness=thickness_of_outline_on_areas)
+        cv2.polylines(outline_canvas, pts=np.int32([points]), isClosed=True, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
 
-    return canvas, centre, outline_canvas, background_colour_of_areas
+    return mask_canvas, centre, outline_canvas, canvas_element
 
 
 def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
@@ -426,7 +324,7 @@ def create_coloured_image_of_shape(sensor_value, mapper, mask_of_shapes_position
 
     if np.isnan(sensor_value):
         # turn to grey
-        colour = np.reshape(colour_of_Nan_values, (1, 1, 3))/255
+        colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3))/255
 
     else:
         # get the colour we want the image to be
@@ -434,7 +332,7 @@ def create_coloured_image_of_shape(sensor_value, mapper, mask_of_shapes_position
 
     coloured_array_mask = np.where(array_mask != background_colour_of_areas, colour, array_mask)
 
-    outlined_coloured_array_mask = np.where(outline == colour_of_outline_of_areas, colour_of_outline_of_areas, coloured_array_mask)
+    outlined_coloured_array_mask = np.where(outline == background_configs["outline_colour"], background_configs["outline_colour"], coloured_array_mask)
 
     return outlined_coloured_array_mask, colour
 
@@ -492,7 +390,7 @@ def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_hei
 
             text = dictionary_of_events[sec]
 
-            text_width, text_height = cv2.getTextSize(text, font_type_of_top_text, font_size_of_top_text, font_thickness_of_top_text)[0]
+            text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["thickness"])[0]
 
             if text_width > x_width:
                 print("The event name '" + text + "'' is too long for the text bar at the top, please input a shorter description of the event and re-run the program.")
@@ -513,18 +411,18 @@ def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_hei
                     new_text = new_text + text[(length_per_line * (i-1)):(length_per_line * i)] + '\n'
                     print(new_text)
 
-                text_width, text_height = cv2.getTextSize(new_text, font_type_of_top_text, font_size_of_top_text, font_thickness_of_top_text)[0]
+                text_width, text_height = cv2.getTextSize(new_text, cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["thickness"])[0]
                 """
 
             # this scale from bottom to top goes in descending order
             start_y = int(y_height/2 + text_height/2)
             start_x = int(x_width/2 - text_width/2)
 
-            cv2.putText(img, text, (start_x, start_y), font_type_of_top_text, font_size_of_top_text, colour_of_top_text, lineType=line_type_of_top_text,
-                        thickness=font_thickness_of_top_text)
+            cv2.putText(img, text, (start_x, start_y), cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["colour"], lineType=cv2_dict[font_configs["event_box"]["line_type"]],
+                        thickness=font_configs["event_box"]["thickness"])
 
-    bordered_image = cv2.copyMakeBorder(img, top=text_box_image_border_width, bottom=text_box_image_border_width, left=text_box_image_border_width,
-                                        right=text_box_image_border_width, borderType=text_box_image_border_type, value=text_box_image_border_colour)
+    bordered_image = cv2.copyMakeBorder(img, top=border_configs["event_box"]["width"], bottom=border_configs["event_box"]["width"], left=border_configs["event_box"]["width"],
+                                        right=border_configs["event_box"]["width"], borderType=cv2_dict[border_configs["event_box"]["type"]], value=border_configs["event_box"]["colour"])
 
     return bordered_image
 
@@ -564,7 +462,7 @@ def create_bar_plot_image(row, x_width, y_height, names, list_of_colours_of_bars
     """
 
     fig = plt.figure()
-    plt.subplot(title="The {} in the different areas.".format(sensor_value_name), xlabel="Areas", ylim=(min_sensor_value, max_sensor_value), ylabel=sensor_value_name)
+    plt.subplot(title="The {} in the different areas.".format(data_configs["title"]), xlabel="Areas", ylim=(data_configs["min_value"], data_configs["max_value"]), ylabel=data_configs["title"])
     plt.bar(names, list(row.iloc[0]), color=list_of_colours_of_bars)
 
     img = fig_to_img(fig)
@@ -572,8 +470,8 @@ def create_bar_plot_image(row, x_width, y_height, names, list_of_colours_of_bars
 
     image = cv2.resize(img, (x_width, y_height))
 
-    bordered_image = cv2.copyMakeBorder(image, top=bar_plot_border_width, bottom=bar_plot_border_width, left=bar_plot_border_width, right=bar_plot_border_width,
-                                        borderType=bar_plot_border_type, value=bar_plot_border_colour)
+    bordered_image = cv2.copyMakeBorder(image, top=border_configs["bar_plot"]["width"], bottom=border_configs["bar_plot"]["width"], left=border_configs["bar_plot"]["width"], right=border_configs["bar_plot"]["width"],
+                                        borderType=cv2_dict[border_configs["bar_plot"]["type"]], value=border_configs["bar_plot"]["colour"])
 
     return bordered_image
 
@@ -609,9 +507,9 @@ def generate_all_points_on_outside_of_shape(corners):
 
             length_on_x_axis = max(start_x, x) - min(start_x, x)
 
-            for i in range(num_points_on_line_for_outside_of_shape):
+            for i in range(arrow_configs["points_on_line"]):
 
-                x_val = min(start_x, x) + (i * length_on_x_axis) / num_points_on_line_for_outside_of_shape
+                x_val = min(start_x, x) + (i * length_on_x_axis) / arrow_configs["points_on_line"]
 
                 new_y = (slope * x_val) - (slope * start_x) + start_y
 
@@ -712,22 +610,22 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
             closest = get_ratio_interval_point(moved_center, list_of_camera_image_midpoints[i], radius, distance-radius)
 
         # draw line for the arrow between the edge of the area to the camera footage frame
-        cv2.line(image, list_of_camera_image_midpoints[i], closest, colour_of_arrow_between_camera_nd_area, thickness=lineThickness_of_arrow_between_camera_nd_area,
-                 lineType=lineType_of_arrow_between_camera_nd_area)
+        cv2.line(image, list_of_camera_image_midpoints[i], closest, arrow_configs["line_colour"], thickness=arrow_configs["line_thickness"],
+                 lineType=arrow_configs["line_type"])
 
         # calculate the angle that the arrow head needs to be
         point_relative_to_point_on_shape = (list_of_camera_image_midpoints[i][0] - closest[0], list_of_camera_image_midpoints[i][1] - closest[1])
 
         rho, pi = convert_cartesian_to_polar(point_relative_to_point_on_shape)
 
-        new_angles = [pi - angle_to_change_line_for_arrow_head, pi + angle_to_change_line_for_arrow_head]
+        new_angles = [pi - arrow_configs["head_angle"], pi + arrow_configs["head_angle"]]
 
         # draw the lines for the arrow head
         for angle in new_angles:
-            x, y = convert_polar_to_cartesian(length_of_arrow_head_lines, angle)
+            x, y = convert_polar_to_cartesian(arrow_configs["head_length"], angle)
 
-            cv2.line(image, (closest[0] + x, closest[1] + y), closest, colour_of_arrow_between_camera_nd_area,
-                     thickness=lineThickness_of_arrow_between_camera_nd_area, lineType=lineType_of_arrow_between_camera_nd_area)
+            cv2.line(image, (closest[0] + x, closest[1] + y), closest, arrow_configs["line_colour"],
+                     thickness=arrow_configs["line_thickness"], lineType=arrow_configs["line_type"])
 
     return image
 
@@ -793,10 +691,10 @@ def merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image):
     concat_inside_list.append(time.time() - start_concat_inside)
 
     start_border = time.time()
-    bordered_rhs_image = cv2.copyMakeBorder(rhs_img, top=video_footage_border_width, bottom=video_footage_border_width, left=video_footage_border_width,
-                                            right=video_footage_border_width, borderType=video_footage_border_type, value=video_footage_border_colour)
-    bordered_lhs_image = cv2.copyMakeBorder(lhs_img, top=bar_plot_border_width, bottom=bar_plot_border_width, left=bar_plot_border_width,
-                                            right=bar_plot_border_width, borderType=bar_plot_border_type, value=bar_plot_border_colour)
+    bordered_rhs_image = cv2.copyMakeBorder(rhs_img, top=border_configs["cameras"]["width"], bottom=border_configs["cameras"]["width"], left=border_configs["cameras"]["width"],
+                                            right=border_configs["cameras"]["width"], borderType=cv2_dict[border_configs["cameras"]["type"]], value=border_configs["cameras"]["colour"])
+    bordered_lhs_image = cv2.copyMakeBorder(lhs_img, top=border_configs["bar_plot"]["width"], bottom=border_configs["bar_plot"]["width"], left=border_configs["bar_plot"]["width"],
+                                            right=border_configs["bar_plot"]["width"], borderType=cv2_dict[border_configs["bar_plot"]["type"]], value=border_configs["bar_plot"]["colour"])
     border_list.append(time.time() - start_border)
 
     try:
@@ -848,14 +746,14 @@ def video_to_frames(read_videos, width, total_height):
 
             text_when_video_finishes = "No Video"
 
-            text_width, text_height = cv2.getTextSize(text_when_video_finishes, font_type_of_camera_footage_text, font_size_of_camera_footage_text,
-                                                      font_thickness_of_camera_footage_text)[0]
+            text_width, text_height = cv2.getTextSize(text_when_video_finishes, cv2_dict[font_configs["cameras"]["type"]], font_configs["cameras"]["size"],
+                                                      font_configs["cameras"]["thickness"])[0]
 
             height = int(total_height/2 - text_height/2)
             start_x = int(width/2 - text_width/2)
 
-            cv2.putText(img, text_when_video_finishes, (start_x, height), font_type_of_camera_footage_text, font_size_of_camera_footage_text,
-                        colour_of_camera_footage_text, lineType=line_type_of_camera_footage_text, thickness=font_thickness_of_camera_footage_text)
+            cv2.putText(img, text_when_video_finishes, (start_x, height), cv2_dict[font_configs["cameras"]["type"]], font_configs["cameras"]["size"],
+                        font_configs["cameras"]["colour"], lineType=cv2_dict[font_configs["cameras"]["line_type"]], thickness=font_configs["cameras"]["thickness"])
 
         resized_frames.append(img)
 
@@ -902,12 +800,12 @@ def create_colourmap(size, mapper, num_dividers):
     return : a 3D numpy array of integers - an array that corresponds to the colourmap image that was created
     """
 
-    inner_colourmap_horizontal_border_width = int(size[1] * proportion_of_width_to_make_inner_colourmap_horizontal_border)
-    space_between_line_and_text = int(size[0] * proportion_of_height_to_make_space_between_line_and_text)
-    inner_colourmap_bottom_border_height = int(size[0] * proportion_of_height_to_make_inner_colourmap_bottom_border)
-    inner_colourmap_top_border_height = int(size[0] * proportion_of_height_to_make_inner_colourmap_top_border)
-    height_of_box_for_indexes = int(size[0] * proportion_of_colourmap_image_to_make_indexes)
-    heading_box_height = int(size[0] * proportion_of_colourmap_image_to_make_heading)
+    inner_colourmap_horizontal_border_width = int(size[1] * colourmap_configs["proportions"]["width"]["inner_border"])
+    space_between_line_and_text = int(size[0] * colourmap_configs["proportions"]["height"]["line_and_text_gap"])
+    inner_colourmap_bottom_border_height = int(size[0] * colourmap_configs["proportions"]["height"]["inner_border_bottom"])
+    inner_colourmap_top_border_height = int(size[0] * colourmap_configs["proportions"]["height"]["inner_border_top"])
+    height_of_box_for_indexes = int(size[0] * colourmap_configs["proportions"]["height"]["index"])
+    heading_box_height = int(size[0] * colourmap_configs["proportions"]["height"]["heading"])
 
     height_of_inner_colmap = size[0] - inner_colourmap_bottom_border_height - inner_colourmap_top_border_height - height_of_box_for_indexes - heading_box_height
 
@@ -918,11 +816,11 @@ def create_colourmap(size, mapper, num_dividers):
     colmap_image = np.ones(size)
 
     # put spectrum of colours on colourmap colours map
-    sensor_value_range = max_sensor_value - min_sensor_value
+    sensor_value_range = data_configs["max_value"] - data_configs["min_value"]
     step = sensor_value_range/(width_of_inner_colmap-1)
     i = inner_colourmap_horizontal_border_width
-    sensor_value = min_sensor_value
-    while sensor_value < max_sensor_value:
+    sensor_value = data_configs["min_value"]
+    while sensor_value < data_configs["max_value"]:
         colour = mapper.to_rgba(sensor_value)[:3][::-1]
 
         colmap_image[starting_y_coord_of_inner_colmap:starting_y_coord_of_inner_colmap + height_of_inner_colmap, i, :] = colour
@@ -944,7 +842,7 @@ def create_colourmap(size, mapper, num_dividers):
 
     # draw the lines along these x-coordinate lines
     for coord in list_of_coordinates_to_draw_lines:
-        colmap_image[start_y_coord_of_line_for_scale:size[0] - inner_colourmap_bottom_border_height, coord-1:coord+1, :] = colour_of_lines_for_scale_on_colourmap
+        colmap_image[start_y_coord_of_line_for_scale:size[0] - inner_colourmap_bottom_border_height, coord-1:coord+1, :] = colourmap_configs["fonts"]["scale"]["colour"]
 
     # add the scale for the colourmap
 
@@ -952,37 +850,37 @@ def create_colourmap(size, mapper, num_dividers):
     sensor_value_divider = sensor_value_range/num_dividers
 
     for i in range(0, num_dividers + 1):
-        abbreviated_num = turn_numbers_into_abbreviations(int(i * sensor_value_divider) + min_sensor_value)
+        abbreviated_num = turn_numbers_into_abbreviations(int(i * sensor_value_divider) + data_configs["min_value"])
         list_of_index_values.append(abbreviated_num)
 
     for i in range(len(list_of_index_values)):
 
         index = list_of_index_values[i]
-        index_width, index_height = cv2.getTextSize(index, font_type_of_index_on_colourmap, font_size_of_index_on_colourmap, font_thickness_of_index_on_colourmap)[0]
+        index_width, index_height = cv2.getTextSize(index, cv2_dict[colourmap_configs["fonts"]["index"]["type"]], colourmap_configs["fonts"]["index"]["size"], colourmap_configs["fonts"]["index"]["thickness"])[0]
 
         start_y_of_index = height_of_box_for_indexes + heading_box_height
         start_x_of_index = int(list_of_coordinates_to_draw_lines[i] - index_width/2)
 
-        cv2.putText(colmap_image, index, (start_x_of_index, start_y_of_index), font_type_of_index_on_colourmap, font_size_of_index_on_colourmap,
-                    colour_of_index_on_colourmap, lineType=line_type_of_index_on_colourmap, thickness=font_thickness_of_index_on_colourmap)
+        cv2.putText(colmap_image, index, (start_x_of_index, start_y_of_index), cv2_dict[colourmap_configs["fonts"]["index"]["type"]], colourmap_configs["fonts"]["index"]["size"],
+                    colourmap_configs["fonts"]["index"]["colour"], lineType=cv2_dict[colourmap_configs["fonts"]["index"]["line_type"]], thickness=colourmap_configs["fonts"]["index"]["thickness"])
 
     # draw black line
-    colmap_image[heading_box_height+1, :, :] = colour_of_line_seperating_colmap_header_and_colmap
+    colmap_image[heading_box_height+1, :, :] = colourmap_configs["fonts"]["seperator"]["colour"]
 
-    heading = "{} in each area".format(sensor_value_name)
+    heading = "{} in each area".format(data_configs["title"])
 
-    heading_width, heading_height = cv2.getTextSize(heading, font_type_of_heading_on_colourmap, font_size_of_heading_on_colourmap,
-                                                    font_thickness_of_heading_on_colourmap)[0]
+    heading_width, heading_height = cv2.getTextSize(heading, cv2_dict[colourmap_configs["fonts"]["heading"]["type"]], colourmap_configs["fonts"]["heading"]["size"],
+                                                    colourmap_configs["fonts"]["heading"]["thickness"])[0]
 
     start_x_of_heading = int(size[1]/2 - heading_width/2)
     start_y_of_heading = int(heading_box_height/2 + heading_height/2)
 
-    cv2.putText(colmap_image, heading, (start_x_of_heading, start_y_of_heading), font_type_of_heading_on_colourmap, font_size_of_heading_on_colourmap,
-                colour_of_heading_on_colourmap, lineType=line_type_of_heading_on_colourmap, thickness=font_thickness_of_heading_on_colourmap)
+    cv2.putText(colmap_image, heading, (start_x_of_heading, start_y_of_heading), cv2_dict[colourmap_configs["fonts"]["heading"]["type"]], colourmap_configs["fonts"]["heading"]["size"],
+                colourmap_configs["fonts"]["heading"]["colour"], lineType=colourmap_configs["fonts"]["heading"]["line_type"], thickness=colourmap_configs["fonts"]["heading"]["thickness"])
 
     # border colourmap
-    border_colmap = cv2.copyMakeBorder(colmap_image, top=colmap_border_width, bottom=colmap_border_width, left=colmap_border_width, right=colmap_border_width,
-                                       borderType=colmap_border_type, value=colmap_border_colour)
+    border_colmap = cv2.copyMakeBorder(colmap_image, top=border_configs["colourmap"]["width"], bottom=border_configs["colourmap"]["width"], left=border_configs["colourmap"]["width"], right=border_configs["colourmap"]["width"],
+                                       borderType=cv2_dict[border_configs["colourmap"]["type"]], value=border_configs["colourmap"]["colour"])
 
     return border_colmap
 
@@ -1002,16 +900,16 @@ def create_image_of_second(second, x_width, y_height):
 
     text = '%05d' % second
 
-    text_width, text_height = cv2.getTextSize(text, font_type_of_second_image, font_size_of_second_image, font_thickness_of_second_image)[0]
+    text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["timer"]["type"]], font_configs["timer"]["size"], font_configs["timer"]["thickness"])[0]
 
     start_y = int(y_height/2 + text_height/2)
     start_x = int(x_width/2 - text_width/2)
 
-    cv2.putText(img, text, (start_x, start_y), font_type_of_second_image, font_size_of_second_image, colour_of_second_image_text,
-                lineType=line_type_of_second_image, thickness=font_thickness_of_second_image)
+    cv2.putText(img, text, (start_x, start_y), cv2_dict[font_configs["timer"]["type"]], font_configs["timer"]["size"], font_configs["timer"]["colour"],
+                lineType=cv2_dict[font_configs["timer"]["line_type"]], thickness=font_configs["timer"]["thickness"])
 
-    bordered_image = cv2.copyMakeBorder(img, top=second_image_border_width, bottom=second_image_border_width, left=second_image_border_width,
-                                        right=second_image_border_width, borderType=second_image_border_type, value=second_image_border_colour)
+    bordered_image = cv2.copyMakeBorder(img, top=border_configs["timer"]["width"], bottom=border_configs["timer"]["width"], left=border_configs["timer"]["width"],
+                                        right=border_configs["timer"]["width"], borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
 
     return bordered_image
 
@@ -1051,24 +949,24 @@ def merge_to_one_image(list_of_images, background, list_of_centers, names, backg
     # make a new array with the shapes on top of the background image
     non_transparent_background_nd_shapes = np.where(canvas_of_just_the_shapes != background_colour_of_areas, canvas_of_just_the_shapes, background_image)
 
-    transparent_background_nd_shapes = cv2.addWeighted(non_transparent_background_nd_shapes, alpha_for_transperancy_of_shapes_on_background, background_image,
-                                                       1-alpha_for_transperancy_of_shapes_on_background, gamma_for_merging_shapes_and_background)
+    transparent_background_nd_shapes = cv2.addWeighted(non_transparent_background_nd_shapes, background_configs["transparency_alpha"], background_image,
+                                                       1-background_configs["transparency_alpha"], background_configs["transparency_gamma"])
 
     for i in range(len(list_of_centers)):
 
         text = names[i]
 
-        text_width, text_height = cv2.getTextSize(text, font_type_of_shape_name_text, font_size_of_shape_name_text, font_thickness_of_shape_name_text)[0]
+        text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["areas"]["type"]], font_configs["areas"]["size"], font_configs["areas"]["thickness"])[0]
 
         start_x_of_shape_name_text = int(list_of_centers[i][0] - text_width/2)
         height_of_shape_name_text = int(list_of_centers[i][1] + text_height/2)
 
-        cv2.putText(transparent_background_nd_shapes, text, (start_x_of_shape_name_text, height_of_shape_name_text), font_type_of_shape_name_text,
-                    font_size_of_shape_name_text, colour_of_shape_name_text, lineType=line_type_of_shape_name_text, thickness=font_thickness_of_shape_name_text)
+        cv2.putText(transparent_background_nd_shapes, text, (start_x_of_shape_name_text, height_of_shape_name_text), cv2_dict[font_configs["areas"]["type"]],
+                    font_configs["areas"]["size"], font_configs["areas"]["colour"], lineType=cv2_dict[font_configs["areas"]["line_type"]], thickness=font_configs["areas"]["thickness"])
 
-    bordered_transparent_background_nd_shapes = cv2.copyMakeBorder(transparent_background_nd_shapes, top=merged_image_border_width, bottom=merged_image_border_width,
-                                                                   left=merged_image_border_width, right=merged_image_border_width,
-                                                                   borderType=merged_image_border_type, value=merged_image_border_colour)
+    bordered_transparent_background_nd_shapes = cv2.copyMakeBorder(transparent_background_nd_shapes, top=border_configs["background"]["width"], bottom=border_configs["background"]["width"],
+                                                                   left=border_configs["background"]["width"], right=border_configs["background"]["width"],
+                                                                   borderType=cv2_dict[border_configs["background"]["type"]], value=border_configs["background"]["colour"])
 
     return bordered_transparent_background_nd_shapes
 
@@ -1185,7 +1083,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
     else:
         # create bar plot
-        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * bar_plot_border_width),
+        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * border_configs["bar_plot"]["width"]),
                                                names, list_of_colours)
 
         # merge the main heatmap image and the bar plot
@@ -1291,9 +1189,9 @@ def main():
     else:
         joined_df = list_of_dfs[0]
 
-    frames_per_second = calculate_frames_per_sec(len(joined_df.Second), video_length)
+    frames_per_second = calculate_frames_per_sec(len(joined_df.Second), video_configs["length"])
 
-    event_duration_frame = int(frames_per_second * event_duration_sec)
+    event_duration_frame = int(frames_per_second * event_box_configs["text_duration"])
 
     if video_file_paths:
         # find out how many images will be on the lhs
@@ -1312,14 +1210,14 @@ def main():
         num_of_images_on_lhs = 0
 
     # create mapper
-    mapper = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min_sensor_value, vmax=max_sensor_value), cmap=colourmap_name)
+    mapper = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=data_configs["min_value"], vmax=data_configs["max_value"]), cmap=colourmap_name)
 
     # get width of second image
-    x_width_of_second_image = int(base_width*proportion_of_base_width_to_make_second_image) - (2 * second_image_border_width)
+    x_width_of_second_image = int(base_width*video_proportion_configs["width"]["timer"]) - (2 * border_configs["timer"]["width"])
 
     # get the size of the colourmap image
-    colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * second_image_border_width))
-    colourmap_height = int(background.shape[0] * proportion_of_image_height_to_make_colourmap_and_second_image) - (2 * colmap_border_width)
+    colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * border_configs["timer"]["width"]))
+    colourmap_height = int(background.shape[0] * video_proportion_configs["height"]["colourmap"]) - (2 * border_configs["colourmap"]["width"])
 
     import time
     start_colmap = time.time()
@@ -1331,24 +1229,24 @@ def main():
     y_height_of_second_image = colourmap_height
 
     # width of camera images beside heatmap
-    width_of_left_and_right_images = int(base_width * proportion_of_base_width_to_make_the_left_and_right_images)
+    width_of_left_and_right_images = int(base_width * video_proportion_configs["width"]["cameras"])
 
     # height of event text box
-    height_of_text_box = int(proportion_of_image_height_to_make_text_box * (border_colmap.shape[0] + background.shape[0]))
+    height_of_text_box = int(video_proportion_configs["height"]["events_box"] * (border_colmap.shape[0] + background.shape[0]))
 
     # get the height of the video
     if event_details:
-        height_of_video = (background.shape[0] + (2 * merged_image_border_width)) + border_colmap.shape[0] + (height_of_text_box + (2 * text_box_image_border_width))
+        height_of_video = (background.shape[0] + (2 * border_configs["background"]["width"])) + border_colmap.shape[0] + (height_of_text_box + (2 * border_configs["event_box"]["width"]))
 
     else:
-        height_of_video = (background.shape[0] + (2 * merged_image_border_width)) + border_colmap.shape[0]
+        height_of_video = (background.shape[0] + (2 * border_configs["background"]["width"])) + border_colmap.shape[0]
 
     # get the width of the video
     if read_videos:
-        width_of_video = base_width + (2 * merged_image_border_width) + (2 * width_of_left_and_right_images) + (2 * video_footage_border_width) + (2 * bar_plot_border_width)
+        width_of_video = base_width + (2 * border_configs["background"]["width"]) + (2 * width_of_left_and_right_images) + (2 * border_configs["cameras"]["width"]) + (2 * border_configs["bar_plot"]["width"])
 
     else:
-        width_of_video = base_width + (2 * merged_image_border_width) + width_of_left_and_right_images  + (2 * bar_plot_border_width)
+        width_of_video = base_width + (2 * border_configs["background"]["width"]) + width_of_left_and_right_images  + (2 * border_configs["bar_plot"]["width"])
 
     #print(height_of_video)
     #print(width_of_video)
