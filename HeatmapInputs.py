@@ -6,7 +6,7 @@ import yaml
 import os
 
 from drawing_images_program import main as drawing_program
-from utils import _add_extension, _exit_if_empty, _exit_if_try_fails, _is_file_with_valid_extension
+from utils import _add_extension, _exit_if_empty, _exit_if_try_fails, _get_filename_no_extension, _is_file_with_valid_extension
 
 
 # read in default configuration variables
@@ -17,9 +17,11 @@ default_csv_folder = default_configs["default_csv_folder"]
 default_video_folder = default_configs["default_video_folder"]
 default_background_image = default_configs["default_background_image"]
 default_output_file = default_configs["default_output_file"]
-default_area_details_file = default_configs["default_area_details_file"]
+default_area_details_folder = default_configs["default_area_details_folder"]
 default_events_file = default_configs["default_events_file"]
-# WIP - will be removed once automate colourmap creation
+# TODO: remove base_width
+default_base_width = default_configs["default_base_width"]
+# TODO: remove below once automate colourmap creation
 default_colourmap_image = default_configs["default_colourmap_image"]
 default_colourmap_name = default_configs["default_colourmap_name"]
 
@@ -33,7 +35,9 @@ class HeatmapInputs:
         self.event_details = {}
         self.background_image_path = default_background_image
         self.output_file_name = default_output_file
-        # WIP - will be removed once automate colourmap creation
+        # TODO: remove base_width
+        self.base_width = default_base_width
+        # TODO: remove below once automate colourmap creation
         self.colourmap_image_path = default_colourmap_image
         self.colourmap_name = default_colourmap_name
 
@@ -245,7 +249,7 @@ class HeatmapInputs:
         self.background_image_path = self.process_background_image_path(args.background_image_path)
         self.output_file_name = self.process_output_file_name(args.output_file_name)
         if args.area_details_file_path == "draw":
-            self.area_details = drawing_program(self.background_image_path)
+            self.area_details = drawing_program(self.background_image_path, self.base_width, default_area_details_folder)
         else:
             self.area_details = self._get_heatmap_area_details(args.area_details_file_path)
         if args.events_file_path != "none":
@@ -288,10 +292,11 @@ class HeatmapInputs:
         )
         supplied_area_details_file_path = input()
         if supplied_area_details_file_path == "\n":
-            supplied_area_details_file_path = default_area_details_file
-            print("\nThe path to the file containing the data on the heatmap areas drawn on the image has been set to the default - '{}'.".format(default_area_details_file))
+            output_file_name = _add_extension(_get_filename_no_extension(self.background_image_path), "json")
+            supplied_area_details_file_path = os.path.join(default_area_details_folder, output_file_name)
+            print("\nThe path to the file containing the data on the heatmap areas drawn on the image has been set to the default - '{}'.".format(supplied_area_details_file_path))
         if supplied_area_details_file_path == "draw":
-            self.area_details = drawing_program(self.background_image_path)
+            self.area_details = drawing_program(self.background_image_path, self.base_width, default_area_details_folder)
         else:
             self.area_details = self._get_heatmap_area_details(supplied_area_details_file_path)
 

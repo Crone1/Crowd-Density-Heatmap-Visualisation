@@ -1349,7 +1349,9 @@ def main():
     event_details = heatmap_inputs.event_details
     background_image_path = heatmap_inputs.background_image_path
     output_file_name = heatmap_inputs.output_file_name
-    # WIP - will be removed once automate colourmap creation
+    # TODO: remove base_width
+    base_width = heatmap_inputs.base_width
+    # TODO: remove below once automate colourmap creation
     colourmap_image_path = heatmap_inputs.colourmap_image_path
     colourmap_name = heatmap_inputs.colourmap_name
 
@@ -1378,7 +1380,7 @@ def main():
     list_of_shape_arrays = new_list_of_shape_arrays
     """
 
-    if len(csv_file_paths) != len(area_details):
+    if len(csv_file_paths) != len(list_of_shape_arrays):
         print("\nThe number of areas you drew and the number of csvs you supplied do not match. Please re-run the program drawing the same amount of areas on the image as csvs you supplied.")
         exit(0)
 

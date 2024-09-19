@@ -14,6 +14,7 @@ import sys
 import os
 
 from DrawingInputs import DrawingInputs
+from utils import _add_extension, _get_filename_no_extension
 
 
 # read in YAML configuration file
@@ -251,21 +252,20 @@ def handle_inputs():
     else:
         input_handler.get_variables_from_user()
 
-    main(input_handler.background_folder, input_handler.background_name, input_handler.base_width, input_handler.output_folder)
+    main(input_handler.background_path, input_handler.base_width, input_handler.output_folder)
 
 
-def main(background_folder, background_name, base_width, output_folder):
+def main(background_image_path, base_width, output_folder):
 
-    background_path = os.path.join(background_folder, background_name)
-    background = reshape_background_image(background_path, base_width)
+    background = reshape_background_image(background_image_path, base_width)
     line_thickness = int(proportion_for_line_thickness * base_width)
 
     print_how_to_use_image_drawer()
     area_details = draw_on_image(background, line_thickness)
 
     # output to file
-    output_filename = os.path.splitext(os.path.basename(background_name))[0]
-    output_path = os.path.join(output_folder, output_filename + ".json")
+    output_file_name = _add_extension(_get_filename_no_extension(background_image_path), "json")
+    output_path = os.path.join(output_folder, output_file_name)
     with open(output_path, 'w') as file_of_area_details:
         file_of_area_details.write(json.dumps(area_details))
         print("\nThe area details were written to the file under the name '" + str(output_path) + "'.")
