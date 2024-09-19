@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-This program needs the path to a YAML/JSON Configuraton file
-It returns a file containing a list of dictionaries containing the details of the coordinates of the shapes drawn when this program is run.
+This program needs the path to a YAML/JSON Configuration file
+It returns a file containing a list of dictionaries containing the details of the coordinates of the areas drawn when this program is run.
 """
 
 # imports
@@ -29,13 +29,12 @@ proportion_for_line_thickness = drawing_configs["proportion_for_line_thickness"]
 drawing = False
 drawing_poly = False
 start_x, start_y = -1, -1
-shapes = []
+area_details = []
 poly_points = []
 img_hist = []
 
 
 def reshape_background_image(img_name, base_width):
-
     """
     Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
 
@@ -73,9 +72,8 @@ def reshape_background_image(img_name, base_width):
 
 
 def print_how_to_use_image_drawer():
-
     """
-    Function Goal : This function contains a series of print statements that explain to the user how to use the program and draw the shapes on the image
+    Function Goal : This function contains a series of print statements that explain to the user how to use the program and draw the areas the image
 
     return : None
 
@@ -120,7 +118,7 @@ def keyboard_callbacks(key, line_thickness):
             img_hist.append(np.copy(tmp_img))
 
             # Save parameters
-            shapes.append({
+            area_details.append({
                 "type": "polygon",
                 "points": poly_points,
             })
@@ -135,7 +133,7 @@ def keyboard_callbacks(key, line_thickness):
 
         elif len(img_hist) > 1:
             img_hist.pop()
-            shapes.pop()
+            area_details.pop()
             tmp_img = np.copy(img_hist[-1])
 
 
@@ -190,7 +188,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
         if drawing_mode == "rectangle" and (start_x != x or start_y != y):
             cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_colour, line_thickness)
             # save shape as json
-            shapes.append({
+            area_details.append({
                 "type": "rectangle",
                 "start": (start_x, start_y),
                 "end": (x, y),
@@ -199,7 +197,7 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
         elif drawing_mode == "circle":
             radius = int(dist_between_2_points(start_x, start_y, x, y))
             cv2.circle(tmp_img, (start_x, start_y), radius, drawing_colour, line_thickness)
-            shapes.append({
+            area_details.append({
                 "type": "circle",
                 "centre": (start_x, start_y),
                 "radius": radius,
@@ -236,11 +234,10 @@ def draw_on_image(image, thickness):
 
     cv2.destroyAllWindows()
 
-    return shapes
+    return area_details
 
 
 def handle_inputs():
-
     """
     Function Goal : call the functions that input the variables that are needed to make the program work and pass these variables to the main() function
 
@@ -264,16 +261,17 @@ def main(background_folder, background_name, base_width, output_folder):
     line_thickness = int(proportion_for_line_thickness * base_width)
 
     print_how_to_use_image_drawer()
-    shapes = draw_on_image(background, line_thickness)
+    area_details = draw_on_image(background, line_thickness)
 
     # output to file
     output_filename = os.path.splitext(os.path.basename(background_name))[0]
     output_path = os.path.join(output_folder, output_filename + ".json")
-    with open(output_path, 'w') as file_of_shapes:
-        string_of_shapes = json.dumps(shapes)
-        file_of_shapes.write(string_of_shapes)
+    with open(output_path, 'w') as file_of_area_details:
+        file_of_area_details.write(json.dumps(area_details))
+        print("\nThe area details were written to the file under the name '" + str(output_path) + "'.")
 
-        print("\nThe shapes were written to the file under the name '" + str(output_path) + "'.")
+    # return area details
+    return area_details
 
 
 if __name__ == '__main__':
