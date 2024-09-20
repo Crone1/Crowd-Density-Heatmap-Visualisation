@@ -10,7 +10,7 @@ from utils.file_utils import add_extension, get_filename_no_extension, is_file_w
 from utils.input_utils import exit_if_empty, exit_if_try_fails
 
 
-# read in default configuration variables
+# read the default configuration variables
 with open("configs/default_configs.yaml", "r") as defaults_file:
     default_configs = yaml.load(defaults_file, Loader=yaml.FullLoader)
 
@@ -117,6 +117,7 @@ class HeatmapInputs:
         exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
         # check the path is a file
         exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+
         # check it's a json file
         def _load_json(file_path):
             with open(file_path, "r") as file:
@@ -144,6 +145,7 @@ class HeatmapInputs:
         exit_if_empty(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
         # check the path is a file
         exit_if_empty(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+
         # check it's a readable file
         def _read_file(path):
             with open(path, "r") as file:
@@ -155,6 +157,7 @@ class HeatmapInputs:
             error="The file at the path entered can not be accessed.",
             criteria=universal_criteria
         )
+
         # check it's the correct format
         def _check_first_token_is_int(path):
             int(_read_file(path)[0].strip().split(" ")[0])
@@ -263,12 +266,12 @@ class HeatmapInputs:
 
         print("\nHello!")
 
-        # csv files
+        # csv folder
         print("\nPlease enter the path to the folder containing the csvs needed to colour the heatmap.")
         supplied_csv_folder = input()
         self.csv_file_paths = self._get_file_paths(supplied_csv_folder, "csv")
 
-        # folder of videos
+        # videos folder
         print("\nPlease enter the name of the folder containing the video footage taken from the cameras that the data in the csvs was taken from.")
         supplied_videos_folder = input()
         self.video_file_paths = self._get_file_paths(supplied_videos_folder, "mp4")

@@ -114,4 +114,4 @@ colourmap:
 
 # configurate events text box
 events_box:
-  text_duration: 2
+  text_duration: 5

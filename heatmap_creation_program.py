@@ -107,8 +107,6 @@ def create_array_of_shape(shape_details, img_size):
     return : the array containing the 1's and 0's, the centre point of the 1's
     """
 
-    value_in_mask = [0.5, 0.5, 0.5]
-
     # sort colours for making areas and outlines
     if background_configs["outline_colour"] == [0, 0, 0]:
         outline_canvas = np.ones(img_size)
@@ -119,6 +117,9 @@ def create_array_of_shape(shape_details, img_size):
         mask_canvas = np.zeros(img_size)
         canvas_element = [0, 0, 0]
 
+    value_in_mask = [0.5, 0.5, 0.5]
+
+    # draw masks
     if shape_details["type"] == "rectangle":
         start = tuple(shape_details["start"])
         end = tuple(shape_details["end"])
@@ -251,9 +252,9 @@ def join_dataframes(list_of_dfs):
 
     list_of_dfs : list of DataFrames - a list containing DataFrames with 2 columns, Second and sensor value
 
-    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the the sensor values
+    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the sensor values
                          from each csv at that second
-                         (Second, df1 sensor value, df2 Crowd desnity, .... ect.)
+                         (Second, df1 sensor value, df2 Crowd density, .... ect.)
     """
 
     join = pd.merge(list_of_dfs[0], list_of_dfs[1], left_on="Second", right_on="Second", how="outer")
@@ -679,7 +680,6 @@ def merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image):
                                                            the right array is an array corresponding to the image that will go to the right of the main heatmap image
     """
 
-    import time
     start_slice = time.time()
     lhs_list = frames[:num_of_images_on_lhs]
     rhs_list = frames[num_of_images_on_lhs:]
@@ -723,7 +723,6 @@ def video_to_frames(read_videos, width, total_height):
     for i in range(len(read_videos)):
         # for each video
 
-        import time
         #start_read = time.time()
 
         try:
@@ -1002,7 +1001,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     return : 3D numpy array of integers - an array corresponding to the image which is made up of all the different images to be featured in the video merged together
     """
 
-    import time
     start_other = time.time()
 
     merge_heatmap_start = time.time()
@@ -1027,7 +1025,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     # merge the colormap and second image with the background image
     main_heatmap_image = np.concatenate((shapes_nd_background_image, colmap_nd_second))
 
-    import time
     shapes_list.append(time.time() - start_other)
 
     start_video = time.time()
@@ -1035,7 +1032,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     # if there are camera footage videos to put on the sides of the heatmap video
     if read_videos:
 
-        import time
         start_video_2_frames = time.time()
 
         # get a list of 1 frame from each video and reshape them
@@ -1043,7 +1039,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
         video_2_frames_list.append(time.time() - start_video_2_frames)
 
-        import time
         start_bar = time.time()
 
         # create bar plot
@@ -1051,7 +1046,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
         bar_list.append(time.time() - start_bar)
 
-        import time
         start_merge = time.time()
 
         # crate the left and right images from the frames of the videos
@@ -1059,7 +1053,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
         merge_list.append(time.time() - start_merge)
 
-        import time
         start_resize = time.time()
 
         # resize the left and right images
@@ -1090,7 +1083,6 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
         # merge the main heatmap image and the bar plot
         final_image = np.concatenate((bar_plot_image, main_heatmap_image), axis=1)
 
-    import time
     video_list.append(time.time() - start_video)
 
     return final_image
@@ -1123,9 +1115,7 @@ def write_an_image_to_a_folder(output_folder_name, img):
 
 
 def main():
-    import time
     start_time = time.time()
-    print(start_time)
 
     # read in the variables
     input_handler = HeatmapInputs()
@@ -1151,9 +1141,7 @@ def main():
     # deal with inputs
     csv_names = [csv[:-10] for csv in csv_file_paths]
 
-
-
-    # reshape the background
+    # reshape background
     background = reshape_background_image(background_image_path, base_width)
 
     list_of_shape_arrays, list_of_centres, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(area_details, background.shape)
@@ -1220,7 +1208,6 @@ def main():
     colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * border_configs["timer"]["width"]))
     colourmap_height = int(background.shape[0] * video_proportion_configs["height"]["colourmap"]) - (2 * border_configs["colourmap"]["width"])
 
-    import time
     start_colmap = time.time()
     # create the colourmap image
     border_colmap = create_colourmap((colourmap_height, colourmap_width, 3), mapper, 4)
@@ -1256,7 +1243,6 @@ def main():
     writer = cv2.VideoWriter(filename=output_file_name, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=frames_per_second, frameSize=(width_of_video, height_of_video),
                              isColor=True)
 
-    import time
     print("time before iteration through rows = {}".format(time.time() - start_time))
     new_start_time = time.time()
 
@@ -1268,7 +1254,6 @@ def main():
 
         df_row = pd.DataFrame(r).T
 
-        import time
         start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = time.time()
 
         # create the images of the shapes from the sensor values and areas
@@ -1292,7 +1277,6 @@ def main():
         # print(merged_image.shape)
         write_an_image_to_a_video(writer, merged_image)
 
-        import time
         print(time.time() - new_start_time)
         new_start_time = time.time()
 
@@ -1319,7 +1303,6 @@ def main():
     print("slice = {}".format(sum(slice_list)))
     print("border = {}".format(sum(border_list)))
 
-    import time
     print("Time taken = {}".format(time.time() - start_time - full_read_time))
 
 

@@ -6,7 +6,6 @@ import time
 
 
 class VideoReader:
-
     """
     This class is used along with the VideoReaderQueue class to read the frames of the videos into a queue to speed up this process
     """
@@ -73,7 +72,6 @@ class VideoReader:
 
 
 class VideoReaderQueue(VideoReader):
-
     """
     This class is used along with the VideoReader class to read the frames of the videos into a queue to speed up this process
     """

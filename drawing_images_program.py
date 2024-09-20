@@ -72,10 +72,11 @@ def print_how_to_use_image_drawer():
         "Backspace": Undo
     """
 
-    print(" To:\t\t\t\t Press:")
-    print(" Draw rectangle:\t\t 'r'\n Draw multi cornered polygon:\t 'p'\n Draw circle:\t\t\t 'c'")
-    print(" Finish drawing polygon:\t 'Enter'")
-    print(" Undo the last drawn shape:\t 'Backspace'\n Finished drawing:\t\t 'Esc'\n")
+    print("Drawing Commands")
+    print("  To:\t\t\t\t Press:")
+    print("  Draw rectangle:\t\t 'r'\n Draw multi cornered polygon:\t 'p'\n Draw circle:\t\t\t 'c'")
+    print("  Finish drawing polygon:\t 'Enter'")
+    print("  Undo the last drawn shape:\t 'Backspace'\n Finished drawing:\t\t 'Esc'")
     print("The default shape is:", drawing_mode)
 
 
