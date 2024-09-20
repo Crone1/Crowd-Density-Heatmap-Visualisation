@@ -11,10 +11,9 @@ import json
 import yaml
 import cv2
 import sys
-import os
 
 from DrawingInputs import DrawingInputs
-from utils.file_utils import add_extension, get_filename_no_extension
+from utils.maths_utils import get_distance
 
 
 # read the drawing customisation configuration variables
@@ -25,12 +24,9 @@ with open("configs/default_configs.yaml", "r") as default_config_file:
 with open("configs/video_resolutions.yaml", "r") as resolution_file:
     resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
 
-drawing_colour = drawing_configs["drawing_colour"]
-drawing_mode = drawing_configs["drawing_mode"]
-proportion_for_line_thickness = drawing_configs["proportion_for_line_thickness"]
-
 
 # variables needed to set up drawing
+drawing_mode = drawing_configs["drawing_mode"]
 drawing = False
 drawing_poly = False
 start_x, start_y = -1, -1
@@ -83,7 +79,7 @@ def print_how_to_use_image_drawer():
     print("The default shape is:", drawing_mode)
 
 
-def keyboard_callbacks(key, line_thickness):
+def keyboard_callbacks(key):
 
     global drawing_mode, drawing, poly_points, tmp_img
 
@@ -104,7 +100,8 @@ def keyboard_callbacks(key, line_thickness):
 
             # Update image
             tmp_img = np.copy(img_hist[-1])
-            cv2.polylines(tmp_img, np.int32([poly_points]), True, drawing_colour, line_thickness)
+            line_thickness = int(drawing_configs["proportion_for_line_thickness"] * img.shape[1])
+            cv2.polylines(tmp_img, np.int32([poly_points]), True, drawing_configs["drawing_colour"], line_thickness)
             img_hist.append(np.copy(tmp_img))
 
             # Save parameters
@@ -127,24 +124,11 @@ def keyboard_callbacks(key, line_thickness):
             tmp_img = np.copy(img_hist[-1])
 
 
-def dist_between_2_points(point1_x, point1_y, point2_x, point2_y):
-    """
-    Function Goal : get the distance between 2 points
+def mouse_callbacks(event, x, y):
 
-    point1_x : integer - the x coordinate for point 1
-    point1_y : integer - the y coordinate for point 1
-    point2_x : integer - the x coordinate for point 2
-    point2_y : integer - the y coordinate for point 2
+    global start_x, start_y, drawing, drawing_mode, img, tmp_img, poly_points
 
-    return : integer - the distance between point1 and point2
-    """
-
-    return np.hypot(point1_x - point2_x, point1_y - point2_y)
-
-
-def mouse_callbacks(event, x, y, flags, param, line_thickness):
-
-    global start_x, start_y, drawing, drawing_mode, img, tmp_img, drawing_colour, poly_points
+    line_thickness = int(drawing_configs["proportion_for_line_thickness"] * img.shape[1])
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
@@ -161,22 +145,22 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             # Draw temporary shape that follows the cursor
             if drawing_mode == "rectangle":
                 cv2.rectangle(tmp_img, (start_x, start_y),
-                              (x, y), drawing_colour, line_thickness)
+                              (x, y), drawing_configs["drawing_colour"], line_thickness)
 
             elif drawing_mode == "circle":
                 cv2.circle(tmp_img, (start_x, start_y), int(
-                    dist_between_2_points(start_x, start_y, x, y)), drawing_colour, line_thickness)
+                    get_distance((start_x, start_y), (x, y))), drawing_configs["drawing_colour"], line_thickness)
 
             elif drawing_mode == "polygon":
                 cv2.polylines(tmp_img, np.int32(
-                    [poly_points + [(x, y)]]), True, drawing_colour, line_thickness)
+                    [poly_points + [(x, y)]]), True, drawing_configs["drawing_colour"], line_thickness)
 
     elif event == cv2.EVENT_LBUTTONUP:
         drawing = False
 
         # Finish drawing shape
         if drawing_mode == "rectangle" and (start_x != x or start_y != y):
-            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_colour, line_thickness)
+            cv2.rectangle(tmp_img, (start_x, start_y), (x, y), drawing_configs["drawing_colour"], line_thickness)
             # save shape as json
             area_details.append({
                 "type": "rectangle",
@@ -185,8 +169,8 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             })
 
         elif drawing_mode == "circle":
-            radius = int(dist_between_2_points(start_x, start_y, x, y))
-            cv2.circle(tmp_img, (start_x, start_y), radius, drawing_colour, line_thickness)
+            radius = int(get_distance((start_x, start_y), (x, y)))
+            cv2.circle(tmp_img, (start_x, start_y), radius, drawing_configs["drawing_colour"], line_thickness)
             area_details.append({
                 "type": "circle",
                 "centre": (start_x, start_y),
@@ -194,14 +178,14 @@ def mouse_callbacks(event, x, y, flags, param, line_thickness):
             })
 
         elif drawing_mode == "polygon":
-            # ie dont cancel drawing
+            # don't cancel drawing
             drawing = True
             return
 
         img_hist.append(np.copy(tmp_img))
 
 
-def draw_on_image(image, thickness):
+def draw_on_image(image):
 
     global img, tmp_img
 
@@ -209,8 +193,7 @@ def draw_on_image(image, thickness):
     img_hist.append(img)
     tmp_img = np.copy(img)
     cv2.namedWindow('image')
-    cv2.setMouseCallback('image', lambda event, x, y, flags, param: mouse_callbacks(event, x, y, flags, param, line_thickness=thickness))
-
+    cv2.setMouseCallback('image', lambda event, x, y, flags, params: mouse_callbacks(event, x, y))
     while True:
         cv2.imshow('image', tmp_img if drawing else img_hist[-1])
 
@@ -220,7 +203,7 @@ def draw_on_image(image, thickness):
             break
 
         else:
-            keyboard_callbacks(key, thickness)
+            keyboard_callbacks(key)
 
     cv2.destroyAllWindows()
 
@@ -256,9 +239,8 @@ def main(background_image_path, base_width, output_folder):
     background = reshape_background_image(raw_img, desired_size)
 
     # draw areas
-    line_thickness = int(proportion_for_line_thickness * base_width)
     print_how_to_use_image_drawer()
-    area_details = draw_on_image(background, line_thickness)
+    area_details = draw_on_image(background)
 
     # output to file
     output_file_name = add_extension(get_filename_no_extension(background_image_path), "json")
