@@ -12,6 +12,8 @@ import cv2
 
 from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
+from Shape import Shape
+
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 
 
@@ -96,84 +98,19 @@ def reshape_background_image(img_name, base_width):
     return reshaped_img
 
 
-def create_array_of_shape(shape_details, img_size):
-    """
-    Function Goal : Create an array with the same dimensions as the image that the shapes are being drawn on with 1's where the shape should be and 0's everywhere else
-                    This function deals with one shape and returns an array containing only 1 shapes mask
-
-    shape_details : dictionary - the dictionary containing the details needed to identify the shape and it's coordinates on the image
-    img_size : tuple (int, int, int) - the size of the image that the shapes are being drawn on
-
-    return : the array containing the 1's and 0's, the centre point of the 1's
-    """
-
-    # sort colours for making areas and outlines
-    if background_configs["outline_colour"] == [0, 0, 0]:
-        outline_canvas = np.ones(img_size)
-        mask_canvas = np.ones(img_size)
-        canvas_element = [1, 1, 1]
-    else:
-        outline_canvas = np.zeros(img_size)
-        mask_canvas = np.zeros(img_size)
-        canvas_element = [0, 0, 0]
-
-    value_in_mask = [0.5, 0.5, 0.5]
-
-    # draw masks
-    if shape_details["type"] == "rectangle":
-        start = tuple(shape_details["start"])
-        end = tuple(shape_details["end"])
-        centre = ((start[0] + end[0])/2, (start[1] + end[1])/2)
-
-        # draw 1's on array
-        cv2.rectangle(mask_canvas, start, end, color=value_in_mask, thickness=cv2.FILLED)
-
-        # create an array of the outline of the area
-        cv2.rectangle(outline_canvas, start, end, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
-
-    elif shape_details["type"] == "circle":
-        centre = tuple(shape_details["centre"])
-        radius = shape_details["radius"]
-
-        # draw 1's on array
-        cv2.circle(mask_canvas, centre, radius, color=value_in_mask, thickness=cv2.FILLED)
-
-        # create an array of the outline of the area
-        cv2.circle(outline_canvas, centre, radius, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
-
-    elif shape_details["type"] == "poly":
-        points = shape_details["points"]
-        centre = tuple(np.mean(pd.DataFrame(points), axis=0).astype(int))
-
-        # draw 1's on array
-        cv2.fillPoly(mask_canvas, pts=np.int32([points]), color=value_in_mask)
-
-        # create an array of the outline of the area
-        cv2.polylines(outline_canvas, pts=np.int32([points]), isClosed=True, color=background_configs["outline_colour"], thickness=background_configs["outline_thickness"])
-
-    return mask_canvas, centre, outline_canvas, canvas_element
-
-
-def turn_the_drawings_into_arrays(list_of_shapes_details, img_size):
+def create_area_masks(list_of_area_details, img_shape):
     """
     Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centres in a list
 
-    list_of_shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
-    img_size : tuple (int, int, int) - the size of the background image that the masks are to be drawn on
+    list_of_area_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
+    img_shape : tuple (int, int, int) - the size of the background image that the masks are to be drawn on
 
-    return : list of arrays, list of tuples (int, int)
+    return : list of shape objects
     """
-
-    list_of_shape_arrays = []
-    list_of_outlines_of_shape_arrays = []
-    list_of_centres = []
-    for shape_details in list_of_shapes_details:
-        shape_array, centre, outline_of_shape_array, background_colour_of_areas = create_array_of_shape(shape_details, img_size)
-        list_of_outlines_of_shape_arrays.append(outline_of_shape_array)
-        list_of_shape_arrays.append(shape_array)
-        list_of_centres.append(centre)
-
-    return list_of_shape_arrays, list_of_centres, list_of_outlines_of_shape_arrays, background_colour_of_areas
+    area_shapes = [Shape.from_dict(area_info_dict) for area_info_dict in list_of_area_details]
+    for shape in area_shapes:
+        shape.create_masks(img_shape, outline_thickness=background_configs["outline_thickness"])
+    return area_shapes
 
 
 def create_a_list_of_dataframes(csv_file_paths):
@@ -326,25 +263,24 @@ def create_coloured_image_of_shape(sensor_value, mapper, mask_of_shapes_position
     if np.isnan(sensor_value):
         # turn to grey
         colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3))/255
-
     else:
         # get the colour we want the image to be
         colour = mapper.to_rgba(sensor_value)[:3][::-1]
 
-    coloured_array_mask = np.where(array_mask != background_colour_of_areas, colour, array_mask)
+    coloured_array_mask = np.where(array_mask != [0, 0, 0], colour, array_mask)
 
-    outlined_coloured_array_mask = np.where(outline == background_configs["outline_colour"], background_configs["outline_colour"], coloured_array_mask)
+    outlined_coloured_array_mask = np.where(outline == [1, 1, 1], background_configs["outline_colour"], coloured_array_mask)
 
     return outlined_coloured_array_mask, colour
 
 
-def loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(df_row_of_sensor_values, list_of_masks_of_shapes, mapper, list_of_outlines_of_shape_arrays, background_colour_of_areas):
+def loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(df_row_of_sensor_values, shape_objects, mapper):
     """
     Function Goal : Be given a row from the DataFrame which is a row of the sensor values for 1 frame worth of video for each differnt shape in the list of shapes
                     and to turn the mask for each shape the colour output when the sensor value for its respective csv is put into the mapper
 
     df_row_of_sensor_values : DataFrame - a row from the DataFrame which is a row of the sensor values for 1 frame worth of video for each differnt csv input
-    list_of_masks_of_shapes : list of arrays of integers - a list containing the masks for each shape
+    shape_objects : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     mapper : the heatmap mapper that maps a number to a colour
 
     return : list of arrays of integers, list of 1x3 arrays of integers - a list containing the coloured masks for each shape and the sensor values of the shape and a list
@@ -353,10 +289,9 @@ def loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(d
 
     list_of_coloured_masks_of_shapes = []
     list_of_colours = []
-    for col in df_row_of_sensor_values:
+    for col, shape in zip(df_row_of_sensor_values, shape_objects):
 
-        coloured_array_mask, colour = create_coloured_image_of_shape(df_row_of_sensor_values.iloc[0, col], mapper, list_of_masks_of_shapes[col],
-                                                                     list_of_outlines_of_shape_arrays[col], background_colour_of_areas)
+        coloured_array_mask, colour = create_coloured_image_of_shape(df_row_of_sensor_values.iloc[0, col], mapper, shape.filled_mask, shape.outline_mask)
 
         list_of_colours.append(colour[::-1])
         list_of_coloured_masks_of_shapes.append(coloured_array_mask)
@@ -1144,7 +1079,8 @@ def main():
     # reshape background
     background = reshape_background_image(background_image_path, base_width)
 
-    list_of_shape_arrays, list_of_centres, list_of_outlines_of_shape_arrays, background_colour_of_areas = turn_the_drawings_into_arrays(area_details, background.shape)
+    # dissect the area details
+    shape_objects = create_area_masks(area_details, background_image.image.shape)
 
     """
     # rotate shape_arrays in list
@@ -1161,7 +1097,7 @@ def main():
     list_of_shape_arrays = new_list_of_shape_arrays
     """
 
-    if len(csv_file_paths) != len(list_of_shape_arrays):
+    if len(csv_file_paths) != len(area_details):
         print("\nThe number of areas you drew and the number of csvs you supplied do not match. Please re-run the program drawing the same amount of areas on the image as csvs you supplied.")
         exit(0)
 
@@ -1258,7 +1194,7 @@ def main():
 
         # create the images of the shapes from the sensor values and areas
         list_of_coloured_shape_images, list_of_colours = loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(
-            df_row.loc[:, df_row.columns.difference(["Second"])], list_of_shape_arrays, mapper, list_of_outlines_of_shape_arrays, background_colour_of_areas)
+            df_row.loc[:, df_row.columns.difference(["Second"])], shape_objects, mapper)
 
         loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list.append(
             time.time() - start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images)
@@ -1268,8 +1204,8 @@ def main():
         # merge these images with the image of the colourmap and of the second
         merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, x_width_of_second_image,
                                                                     y_height_of_second_image, width_of_left_and_right_images, event_details,
-                                                                    event_duration_frame, csv_names, list_of_centres, read_videos, num_of_images_on_lhs,
-                                                                    area_details, height_of_text_box, list_of_colours, background_colour_of_areas)
+                                                                    event_duration_frame, csv_names, shape_objects, read_videos, num_of_images_on_lhs,
+                                                                    height_of_text_box, list_of_colours)
 
         turn_all_the_different_images_into_one_image_list.append(time.time() - start_turn_all_the_different_images_into_one_image)
 
