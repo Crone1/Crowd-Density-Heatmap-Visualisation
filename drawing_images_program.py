@@ -214,7 +214,7 @@ def handle_inputs():
     """
     Function Goal : call the functions that input the variables that are needed to make the program work and pass these variables to the main() function
 
-    return : None
+    return : tuple of strings - the path to the background image, the path to the output file
     """
 
     input_handler = DrawingInputs()
@@ -224,10 +224,13 @@ def handle_inputs():
     else:
         input_handler.get_variables_from_user()
 
-    main(input_handler.background_path, input_handler.base_width, input_handler.output_folder)
+    return input_handler.background_path, input_handler.output_path
 
 
-def main(background_image_path, base_width, output_folder):
+def main():
+
+    # get inputs
+    background_image_path, output_path = handle_inputs()
 
     # read image
     raw_img = cv2.imread(background_image_path)
@@ -243,8 +246,6 @@ def main(background_image_path, base_width, output_folder):
     area_details = draw_on_image(background)
 
     # output to file
-    output_file_name = add_extension(get_filename_no_extension(background_image_path), "json")
-    output_path = os.path.join(output_folder, output_file_name)
     with open(output_path, 'w') as file_of_area_details:
         file_of_area_details.write(json.dumps(area_details))
         print("\nThe area details were written to the file under the name '" + str(output_path) + "'.")
@@ -254,4 +255,4 @@ def main(background_image_path, base_width, output_folder):
 
 
 if __name__ == '__main__':
-    handle_inputs()
+    main()
