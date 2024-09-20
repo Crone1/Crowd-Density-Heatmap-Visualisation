@@ -1,5 +1,32 @@
 ---
 
+# describe the data
+data:
+  title: "Crowd Density"
+  min_value: 0
+  max_value: 100
+
+
+# configure the output video
+video:
+  frame_rate: 30
+  resolution: 1080p
+  proportions:
+    height:
+      events_box: 0.12
+      background: 0.70
+      colourmap: 0.18
+    width:
+      background: 0.5
+      cameras: 0.25  # x2 for LHS & RHS
+      colourmap: 0.42
+      timer: 0.08
+
+
+# drawing defaults
+drawing:
+  output_file_name: "./area_details_file.json"
+
 default_csv_folder: data/density_csvs
 default_video_folder: data/cctv_videos
 default_background_folder: data/floor_plans

@@ -17,9 +17,13 @@ from DrawingInputs import DrawingInputs
 from utils.file_utils import add_extension, get_filename_no_extension
 
 
-# read in YAML configuration file
-with open("configs/drawing_configs.yaml", "r") as config_file:
-    drawing_configs = yaml.load(config_file, Loader=yaml.FullLoader)
+# read the drawing customisation configuration variables
+with open("configs/drawing_configs.yaml", "r") as drawing_config_file:
+    drawing_configs = yaml.load(drawing_config_file, Loader=yaml.FullLoader)
+with open("configs/default_configs.yaml", "r") as default_config_file:
+    default_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)
+with open("configs/video_resolutions.yaml", "r") as resolution_file:
+    resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
 
 drawing_colour = drawing_configs["drawing_colour"]
 drawing_mode = drawing_configs["drawing_mode"]
@@ -35,41 +39,26 @@ poly_points = []
 img_hist = []
 
 
-def reshape_background_image(img_name, base_width):
+def reshape_background_image(img, size):
     """
     Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
 
-    img_name : string - the name of the file containing the image you want to reshape
-    base_width : integer - the width that you want the image to be
-    
+    img : 3D numpy array of integers - the array representing the image you want to reshape
+    size : tuple of integers - the height and width you want the image to be
+
     return : 3D numpy array of integers - this array represents the image in its reshaped form in a way that python can deal with.
     """
 
-    img = cv2.imread(img_name)
+    # get image orientation in line with size
+    height, width, _ = img.shape
+    desired_width, desired_height = size
+    if (desired_height <= desired_width) and not (height <= width):
+        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    elif (desired_width <= desired_height) and not (width <= height):
+        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
-    height, width = img.shape[:2]
-
-    '''if height < width:
-        # change image from landscape to portrait
-        img2 = np.zeros((width, height, 3), np.uint8)
-        cv2.transpose(img, img2)
-        cv2.flip(img2, 1, img2)
-
-        # calculate the desired height of the image based on the proportion of the original image and the desired width
-        width_percent = (base_width / float(img2.shape[1]))
-        height_size = int(img2.shape[0] * width_percent)
-
-        reshaped_img = cv2.resize(img2, (base_width, height_size))
-        rotated = True
-
-    else:'''
-
-    width_percent = (base_width / float(img.shape[1]))
-    height_size = int(img.shape[0] * width_percent)
-
-    reshaped_img = cv2.resize(img, (base_width, height_size))
-
-    return reshaped_img
+    # scale to correct resolution
+    return cv2.resize(img, size)
 
 
 def print_how_to_use_image_drawer():
@@ -257,9 +246,17 @@ def handle_inputs():
 
 def main(background_image_path, base_width, output_folder):
 
-    background = reshape_background_image(background_image_path, base_width)
-    line_thickness = int(proportion_for_line_thickness * base_width)
+    # read image
+    raw_img = cv2.imread(background_image_path)
+    video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
+    desired_size = (
+        int(default_configs["video"]["proportions"]["width"]["background"] * video_width),
+        int(default_configs["video"]["proportions"]["height"]["background"] * video_height)
+    )
+    background = reshape_background_image(raw_img, desired_size)
 
+    # draw areas
+    line_thickness = int(proportion_for_line_thickness * base_width)
     print_how_to_use_image_drawer()
     area_details = draw_on_image(background, line_thickness)
 

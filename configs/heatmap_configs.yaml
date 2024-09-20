@@ -1,42 +1,5 @@
 ---
 
-# describe the data
-data_specific:
-  title: "Crowd Density"
-  min_value: 0
-  max_value: 100
-
-
-# describe video resolutions
-video_resolutions:
-  360p: [640, 360]
-  480p: [640, 480]
-  720p: [1280, 720]
-  1080p: [1920, 1080]
-  1440p: [2560, 1440]
-  2160p: [3840, 2160]
-  4320p: [7680, 4320]
-
-
-# configure the output video
-video_specific:
-  length: 300
-  resolution: 1080p
-
-
-# configure video proportions
-video_proportions:
-  height:
-    events_box: 0.11
-    background: 0.71
-    colourmap: 0.18
-  width:
-    background: 0.46
-    cameras: 0.27  # x2 for LHS & RHS
-    colourmap: 0.39
-    timer: 0.7
-
-
 # configure components
 borders:
   background:
