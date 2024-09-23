@@ -40,8 +40,8 @@ event_box_configs = heatmap_configs["events_box"]
 
 
 # lists for timing everything
-loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list = []
-turn_all_the_different_images_into_one_image_list = []
+turn_images_to_one_times = []
+define_heatmap_times = []
 video_list = []
 shapes_list = []
 resize_list = []
@@ -135,11 +135,82 @@ def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
     return : None
     """
     default_colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3)) / 255
-    outline_colour = heatmap_configs["borders"]["background"]["colour"]
+    outline_colour = heatmap_configs["borders"]["areas"]["colour"]
     for val, shape in zip(sensor_values, shape_objects):
         area_colour = default_colour if np.isnan(val) else mapper.to_rgba(val)[:3][::-1]
         shape.change_colour(fill_colour=area_colour, outline_colour=outline_colour)
         shape.create_merged_mask()
+
+
+def join_shapes_to_background(shape_objects, background_array):
+
+    # join shapes together
+    shapes_canvas = np.zeros(background_array.shape)
+    empty = [0, 0, 0]
+    for shape in shape_objects:
+        # if canvas is blank, fill this value with the shape
+        shapes_canvas = np.where(
+            (shape.merged_mask != empty) & (shapes_canvas == empty),
+            shape.merged_mask,
+            shapes_canvas
+        )
+        # if the canvas is filled, fill with the mean values
+        shapes_canvas = np.where(
+            (shape.merged_mask != empty) & (shapes_canvas != empty),
+            np.mean([shape.merged_mask, shapes_canvas], axis=0),
+            shapes_canvas
+        )
+
+    # overlay the joined shapes onto the background image
+    background_with_areas = cv2.addWeighted(
+        np.where(shapes_canvas != empty, shapes_canvas, background_array),
+        background_configs["transparency_alpha"],
+        background_array,
+        1 - background_configs["transparency_alpha"],
+        background_configs["transparency_gamma"],
+    )
+
+    return background_with_areas
+
+
+def label_areas_on_background(background_with_areas, list_of_area_centres, names):
+    """
+    Function Goal : Take a list of arrays corresponding to the images of the areas on the background and merge these arrays so that this array corresponds to one image
+                    of all the different areas and then add this image to the background to create one image
+
+    background_with_areas : 3D numpy array of integers - array of the background image with the shapes overlaid
+    list_of_area_centres : a list of tuples of integers [(int, int), (int, int), ...] -  list of the centre points of each area
+    names : list of strings [str, str, ...] - list of the names of the areas
+
+    return : 3D numpy array of integers - this array corresponds to the image with each area labeled
+    """
+    # define text variables
+    label_font = cv2_dict[font_configs["areas"]["type"]]
+    label_size = font_configs["areas"]["size"]
+    label_thickness = font_configs["areas"]["thickness"]
+
+    # draw the labels on each area
+    for name, (centre_x, centre_y) in zip(names, list_of_area_centres):
+
+        text_width, text_height = cv2.getTextSize(name, label_font, label_size, thickness=label_thickness)[0]
+
+        # define where to start drawing the text on the image
+        start_x_coord = int(centre_x - text_width/2)
+        start_y_coord = int(centre_y + text_height/2)
+
+        # put the text on the image
+        cv2.putText(
+            background_with_areas,
+            name,
+            (start_x_coord, start_y_coord),
+            label_font,
+            label_size,
+            color=font_configs["areas"]["colour"],
+            lineType=cv2_dict[font_configs["areas"]["line_type"]],
+            thickness=label_thickness,
+        )
+
+    return background_with_areas
 
 
 def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_height, event_duration_frame):
@@ -566,67 +637,9 @@ def create_image_of_second(second, x_width, y_height):
     return bordered_image
 
 
-def merge_to_one_image(list_of_images, background, list_of_centres, names, canvas_element):
-    """
-    Function Goal : Take a list of arrays corresponding to the images of the areas on the background and merge these arrays so that this array corresponds to one image
-                    of all the different areas and then add this image to the background to create one image
-
-    list_of_images : list of arrays of integers - la ist of arrays corresponding to the images of the areas and their locations on the background
-    background : 3D numpy array of integers - an array that corresponds to the background image of the shapes
-    list_of_centres : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the centre points of each of the shapes
-    names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
-
-    return : 3D numpy array of integers - this array corresponds to the image of the different areas all overlaid on the background image
-    """
-
-    background_image = np.copy(background).astype(np.float64, copy=False)/255
-
-    if canvas_element == [1, 1, 1]:
-        canvas_of_just_the_shapes = np.ones((background.shape))
-    elif canvas_element == [0, 0, 0]:
-        canvas_of_just_the_shapes = np.zeros((background.shape))
-    else:
-        raise ValueError("Mask is made up of weird value")
-
-    # create blank image with just the areas on it
-    for img in list_of_images:
-
-        # if the element of the blank canvas is already changed get the mean of the 2
-        canvas_of_just_the_shapes = np.where((img != canvas_element) & (canvas_of_just_the_shapes != canvas_element),
-                                             np.average(np.array([canvas_of_just_the_shapes, img]), axis=0), canvas_of_just_the_shapes)
-
-        # if the element of the blank canvas is still blank
-        canvas_of_just_the_shapes = np.where((img != canvas_element) & (canvas_of_just_the_shapes == canvas_element), img,
-                                             canvas_of_just_the_shapes)
-
-    # make a new array with the shapes on top of the background image
-    non_transparent_background_nd_shapes = np.where(canvas_of_just_the_shapes != canvas_element, canvas_of_just_the_shapes, background_image)
-
-    transparent_background_nd_shapes = cv2.addWeighted(non_transparent_background_nd_shapes, background_configs["transparency_alpha"], background_image,
-                                                       1-background_configs["transparency_alpha"], background_configs["transparency_gamma"])
-
-    for i, (centre_x, centre_y) in enumerate(list_of_centres):
-
-        text = names[i]
-
-        text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["areas"]["type"]], font_configs["areas"]["size"], font_configs["areas"]["thickness"])[0]
-
-        start_x_of_shape_name_text = int(centre_x - text_width/2)
-        height_of_shape_name_text = int(centre_y + text_height/2)
-
-        cv2.putText(transparent_background_nd_shapes, text, (start_x_of_shape_name_text, height_of_shape_name_text), cv2_dict[font_configs["areas"]["type"]],
-                    font_configs["areas"]["size"], font_configs["areas"]["colour"], lineType=cv2_dict[font_configs["areas"]["line_type"]], thickness=font_configs["areas"]["thickness"])
-
-    bordered_transparent_background_nd_shapes = cv2.copyMakeBorder(transparent_background_nd_shapes, top=border_configs["background"]["width"], bottom=border_configs["background"]["width"],
-                                                                   left=border_configs["background"]["width"], right=border_configs["background"]["width"],
-                                                                   borderType=cv2_dict[border_configs["background"]["type"]], value=border_configs["background"]["colour"])
-
-    return bordered_transparent_background_nd_shapes
-
-
-def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, background, colourmap_image, df_of_row, timer_width, timer_height,
-                                                 width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, list_of_centres, read_videos,
-                                                 num_of_images_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours, background_colour_of_areas):
+def turn_all_the_different_images_into_one_image(shapes_nd_background_image, colourmap_image, df_of_row, timer_width, timer_height,
+                                                 width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, read_videos,
+                                                 num_videos_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours):
     """
     Function Goal : Get the images of the background, the shapes, the colourmap, the frame number, the camera footage videos and the bar plot image and merge these images
                     together to form one singular image
@@ -656,16 +669,10 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
     start_other = time.time()
 
-    merge_heatmap_start = time.time()
-    # merge background and coloured shape images
-    shapes_nd_background_image = merge_to_one_image(list_of_coloured_shapes, background, list_of_centres, names, background_colour_of_areas)
-
-    merge_heatmap.append(time.time() - merge_heatmap_start)
-
     if dictionary_of_events:
 
         # create an image for the text box at the top
-        text_box = create_image_of_text_box_at_top(df_of_row.Second.iloc[0], dictionary_of_events, background.shape[1], height_of_text_box, event_duration_frame)
+        text_box = create_image_of_text_box_at_top(df_of_row.Second.iloc[0], dictionary_of_events, shapes_nd_background_image.shape[1], height_of_text_box, event_duration_frame)
 
         shapes_nd_background_image = np.concatenate((text_box, shapes_nd_background_image))
 
@@ -836,14 +843,14 @@ def main():
 
         df_row = pd.DataFrame(row).T
 
-        # create the images of the shapes from the sensor values and areas
-        start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = time.time()
-        list_of_coloured_shape_images, list_of_colours = loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(
-            df_row.loc[:, df_row.columns.difference(["Second"])], shape_objects, mapper)
-        loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list.append(
-            time.time() - start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images)
-
-        start_turn_all_the_different_images_into_one_image = time.time()
+        # define central heatmap image
+        define_heatmap_start_time = time.time()
+        add_colour_to_area_masks_and_merge(df_row.drop(columns=["Second"]), shape_objects, cmap.mapper)
+        background_with_areas = join_shapes_to_background(shape_objects, background_image.image)
+        shape_centres = [shape.centre for shape in shape_objects]
+        csv_names = [os.path.basename(path)[:-3] for path in csv_file_paths]
+        labeled_background_with_areas = label_areas_on_background(background_with_areas, shape_centres, csv_names)
+        define_heatmap_times.append(time.time() - define_heatmap_start_time)
 
         # merge these images with the image of the colourmap and of the second
         merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, timer_width,
