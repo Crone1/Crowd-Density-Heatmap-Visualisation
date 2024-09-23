@@ -73,7 +73,7 @@ def create_area_masks(list_of_area_details, img_shape):
     return area_shapes
 
 
-def create_a_list_of_dataframes(csv_file_paths):
+def read_csvs_into_dataframes(csv_file_paths):
     """
     Function Goal : Read each csv into a DataFrame with 2 columns, Second and Sensor value, and add the DataFrame to a list
 
@@ -81,67 +81,22 @@ def create_a_list_of_dataframes(csv_file_paths):
 
     return : list of DataFrames
     """
+    # read the data
+    raw_dfs = [pd.read_csv(csv_path, names=data_configs["columns"]) for csv_path in csv_file_paths]
 
-    list_of_dfs = []
+    # process the data
+    processed_dfs = []
+    for raw_df in raw_dfs:
+        # turn minute to second
+        raw_df["Second"] = raw_df["Minute"].astype(float) * 60
+        df = raw_df.drop(columns=["Minute"])
+        # set second as index
+        processed_dfs.append(df.sort_values("Second").set_index("Second"))
 
-    for csv_path in csv_file_paths:
-
-        # read in 2 column data of Minute and sensor value
-        df = pd.read_csv(csv_path, names=["Minute", "Sensor_value"])
-
-        # change the minute column to second
-        df.Minute = df.Minute * 60
-        df = df.rename(columns={"Minute": "Second"})
-
-        list_of_dfs.append(df)
-
-    return list_of_dfs
+    return processed_dfs
 
 
-def turn_dataframe_into_1_second_per_frame(df):
-    """
-    Function Goal : Change the joined dataframe so that each row is 1 second by averaging out the values where there is more than 1 row for a particular second
-
-    df : DataFrame - a DataFrame containing a Second column and then with columns of the sensor values from each csv at that second
-                     (Second, df1 sensor value, df2 Crowd density, .... ect.)
-
-    return : DataFrame - a DataFrame containing a Second column with one Second per row and then with columns of the sensor values
-                         from each csv at that second
-                         (Second, df1 sensor value, df2 Crowd density, .... ect.) but with 1 second per row
-    """
-
-    new_df = pd.DataFrame(columns=(df.columns))
-
-    min_second_in_df = int(round(min(df.Second-0.5)))
-    max_second_in_df = int(round(max(df.Second+0.5)))
-
-    for i in range(max(1, min_second_in_df), max_second_in_df):
-
-        # get the rows between second "i" and second "i + 1"
-        rows = df.loc[(df.Second > i - 0.00000001) & (df.Second < i + 0.99999999)]
-        rows = rows.reset_index(drop=True)
-
-        if len(rows) == 0:
-            # add empty row
-            new_df.loc[i] = [i] + np.repeat(float("Nan"), len(df.columns))
-            new_df.loc[i].Second = i
-
-        elif len(rows) > 0:
-            # average the values in these rows to get just 1 row with the values for each column
-            list_of_averages = []
-            for mean in rows.loc[:, rows.columns.difference(["Second"])].mean():
-                list_of_averages.append(mean)
-
-            # add this row to the new DataFrame
-            new_df.loc[i] = [i] + list_of_averages
-
-        # fill the "Nan" values with the value encountered before the "Nan" up until you hit the point where the rest of that column is only "Nan" values
-        filled_new_df = new_df.ffill()
-
-    return filled_new_df
-
-
-def join_dataframes(list_of_dfs):
+def process_csv_dataframes(list_of_dfs):
     """
     Function Goal : Take the list of DataFrames and join them together column wise on their second column
                     Then populate the values where a particular column doesn't contain any value for sensor value for this Second
@@ -153,43 +108,20 @@ def join_dataframes(list_of_dfs):
                          from each csv at that second
                          (Second, df1 sensor value, df2 Crowd density, .... ect.)
     """
+    if len(list_of_dfs) == 1:
+        return list_of_dfs[0]
 
-    join = pd.merge(list_of_dfs[0], list_of_dfs[1], left_on="Second", right_on="Second", how="outer")
-    join = join.set_axis(["Second"] + list(range(2)), axis=1)
+    # join the dataframes together
+    joined_df = pd.concat(list_of_dfs, axis=0, join="outer").sort_index()
 
-    for i in range(2, len(list_of_dfs)):
-        join = pd.merge(join, list_of_dfs[i], left_on="Second", right_on="Second", how="outer")
-        join = join.set_axis(join.columns.tolist()[:-1] + [i], axis=1)
+    # fill the non-leading and non-trailing "Nan" values
+    filled_df = joined_df.ffill(limit_area="inside")
 
-    # sort df by second column
-    join["Second"] = join["Second"].astype("float")
-    join = join.sort_values("Second")
-    join = join.reset_index(drop=True)
+    # resample the dataframe to one row for each second - avg values with more rows per second
+    filled_df.index = pd.to_datetime(filled_df.index, unit="s")
+    resampled_df = filled_df.resample('1s').mean()
 
-    for col in join.loc[:, join.columns.difference(["Second"])]:
-
-        # iterate backwards over rows and turn "Nan" boxes to "-1" and find where the "Nan" values stop
-        i = len(join[col]) - 1
-        while np.isnan(join[col][i]):
-            join[col][i] = -1
-            i = i - 1
-
-        # iterate forwards over rows and turn "Nan" boxes to "-1" and find where real values start
-        j = 0
-        while np.isnan(join[col][j]):
-            join[col][j] = -1
-            j = j + 1
-
-    # fill the "Nan" values with the value encountered before the "Nan" up untill you hit the point where the rest of that column is only "Nan" values
-    join = join.ffill()
-
-    # change the joined dataframe so that each row is 1 second by averaging out the values where there is more than 1 row for a particular second
-    df_with_one_sec_per_row = turn_dataframe_into_1_second_per_frame(join.iloc[18000:18030, :])
-
-    # replace the "-1" values with "Nan" values
-    df_with_one_sec_per_row = df_with_one_sec_per_row.replace(-1.0, float("Nan"))
-
-    return df_with_one_sec_per_row
+    return resampled_df.ffill(limit_area="inside")
 
 
 def calculate_frames_per_sec(number_of_frames_in_the_video, length_of_video):
@@ -890,12 +822,6 @@ def main():
     cmap.create()
     colmap_creation_time = time.time() - start_colmap
 
-    # turn the data into a dataframe
-    list_of_dfs = create_a_list_of_dataframes(csv_file_paths)
-
-    if len(list_of_dfs) > 1:
-        joined_df = join_dataframes(list_of_dfs)
-
     else:
         joined_df = list_of_dfs[0]
 
@@ -952,8 +878,11 @@ def main():
     else:
         width_of_video = base_width + (2 * border_configs["background"]["width"]) + width_of_left_and_right_images  + (2 * border_configs["bar_plot"]["width"])
 
-    #print(height_of_video)
-    #print(width_of_video)
+    # turn the data into a dataframe
+    start_joined_df_time = time.time()
+    list_of_dfs = read_csvs_into_dataframes(csv_file_paths)
+    joined_df = process_csv_dataframes(list_of_dfs)
+    joined_df_time = time.time() - start_joined_df_time
 
     # create the writer to write the image to the video
     writer = cv2.VideoWriter(filename=output_file_name, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=frames_per_second, frameSize=(width_of_video, height_of_video),
