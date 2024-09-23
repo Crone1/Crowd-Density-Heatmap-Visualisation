@@ -12,8 +12,8 @@ import cv2
 from components.colourmap import ColourMap
 from data_models.image import Image
 from data_models.shape import Shape
-from io.video_reader import VideoReaderQueue
 from input_handlers.heatmap_inputs import HeatmapInputHandler
+from input_output.video_reader import VideoReaderQueue
 
 # import utilities
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
