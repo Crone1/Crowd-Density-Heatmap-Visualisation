@@ -23,6 +23,9 @@ class ColourMap:
         self.inner_width = None
         self.inner_height = None
         self.image = None
+        self.mapper = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(vmin=data_configs["min_value"], vmax=data_configs["max_value"]), cmap=colourmap_configs["background"]["cmap_name"]
+        )
 
     @staticmethod
     def _abbreviate_num(num):
@@ -86,11 +89,6 @@ class ColourMap:
 
     def _draw_spectrum(self):
 
-        # create colourmap mapper function
-        mapper = matplotlib.cm.ScalarMappable(
-            norm=matplotlib.colors.Normalize(vmin=data_configs["min_value"], vmax=data_configs["max_value"]), cmap=colourmap_configs["background"]["cmap_name"]
-        )
-
         # define position to draw spectrum on image
         bottom_gap_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["bottom_gap"])
         spectrum_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["spectrum"])
@@ -103,7 +101,7 @@ class ColourMap:
 
         # draw the colourmap spectrum on the image
         for val in spectrum_vals:
-            colour = mapper.to_rgba(val)[:3][::-1]
+            colour = self.mapper.to_rgba(val)[:3][::-1]
             self.image[(y_coord - spectrum_height):y_coord, x_coord, :] = colour
             x_coord = x_coord + 1
 
