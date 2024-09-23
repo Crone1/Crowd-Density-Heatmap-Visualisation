@@ -8,7 +8,10 @@ class Shape:
         self.shape_type = shape_type
         self.centre = None
         self.filled_mask = None
+        self.fill_colour = None
         self.outline_mask = None
+        self.outline_colour = None
+        self.merged_mask = None
 
     @staticmethod
     def from_dict(data):
@@ -28,6 +31,15 @@ class Shape:
     def create_masks(self, img_size, filled_val, outline_val, outline_thickness):
         raise NotImplementedError("Subclasses must implement this method")
 
+    def change_colour(self, fill_colour, outline_colour):
+        self.filled_mask = np.where(self.filled_mask == self.fill_colour, fill_colour, self.filled_mask)
+        self.outline_mask = np.where(self.outline_mask == self.outline_colour, outline_colour, self.outline_mask)
+        self.fill_colour = fill_colour
+        self.outline_colour = outline_colour
+
+    def create_merged_mask(self):
+        self.merged_mask = np.where(self.outline_mask == self.outline_colour, self.outline_mask, self.filled_mask)
+
 
 class Rectangle(Shape):
     def __init__(self, start_point, end_point):
@@ -41,15 +53,20 @@ class Rectangle(Shape):
         y_centre = (self.start_point[1] + self.end_point[1]) / 2
         return (x_centre, y_centre)
 
-    def create_masks(self, img_size, filled_val=0.5, outline_val=1, outline_thickness=1):
+    def create_masks(self, img_size, fill_colour=[1, 1, 1], outline_colour=[2, 2, 2], outline_thickness=1):
+        # warn about merge issue
+        if fill_colour == outline_colour:
+            print("WARNING: The shape filling colour and outline colour are the same. May cause issues when merging.")
         # filled mask
         filled_canvas = np.zeros(img_size)
-        cv2.rectangle(filled_canvas, self.start_point, self.end_point, color=[filled_val] * 3, thickness=cv2.FILLED)
+        cv2.rectangle(filled_canvas, self.start_point, self.end_point, color=fill_colour, thickness=cv2.FILLED)
         self.filled_mask = filled_canvas
+        self.fill_colour = fill_colour
         # outline mask
         outline_canvas = np.zeros(img_size)
-        cv2.rectangle(outline_canvas, self.start_point, self.end_point, color=[outline_val] * 3, thickness=outline_thickness)
+        cv2.rectangle(outline_canvas, self.start_point, self.end_point, color=outline_colour, thickness=outline_thickness)
         self.outline_mask = outline_canvas
+        self.outline_colour = outline_colour
 
 
 class Circle(Shape):
@@ -58,15 +75,20 @@ class Circle(Shape):
         self.centre = centre
         self.radius = radius
 
-    def create_masks(self, img_size, filled_val=0.5, outline_val=1, outline_thickness=1):
+    def create_masks(self, img_size, fill_colour=[1, 1, 1], outline_colour=[2, 2, 2], outline_thickness=1):
+        # warn about merge issue
+        if fill_colour == outline_colour:
+            print("WARNING: The shape filling colour and outline colour are the same. May cause issues when merging.")
         # filled mask
         filled_canvas = np.zeros(img_size)
-        cv2.circle(filled_canvas, self.centre, self.radius, color=[filled_val] * 3, thickness=cv2.FILLED)
+        cv2.circle(filled_canvas, self.centre, self.radius, color=fill_colour, thickness=cv2.FILLED)
         self.filled_mask = filled_canvas
+        self.fill_colour = fill_colour
         # outline mask
         outline_canvas = np.zeros(img_size)
-        cv2.circle(outline_canvas, self.centre, self.radius, color=[outline_val] * 3, thickness=outline_thickness)
+        cv2.circle(outline_canvas, self.centre, self.radius, color=outline_colour, thickness=outline_thickness)
         self.outline_mask = outline_canvas
+        self.outline_colour = outline_colour
 
 
 class Polygon(Shape):
@@ -78,12 +100,17 @@ class Polygon(Shape):
     def _calculate_centre(self):
         return tuple(np.mean(self.points, axis=0).astype(int))
 
-    def create_masks(self, img_size, filled_val=0.5, outline_val=1, outline_thickness=1):
+    def create_masks(self, img_size, fill_colour=[1, 1, 1], outline_colour=[2, 2, 2], outline_thickness=1):
+        # warn about merge issue
+        if fill_colour == outline_colour:
+            print("WARNING: The shape filling colour and outline colour are the same. May cause issues when merging.")
         # filled mask
         filled_canvas = np.zeros(img_size)
-        cv2.fillPoly(filled_canvas, pts=np.int32([self.points]), color=[filled_val] * 3)
+        cv2.fillPoly(filled_canvas, pts=np.int32([self.points]), color=fill_colour)
         self.filled_mask = filled_canvas
+        self.fill_colour = fill_colour
         # outline mask
         outline_canvas = np.zeros(img_size)
-        cv2.polylines(outline_canvas, pts=np.int32([self.points]), isClosed=True, color=[outline_val] * 3, thickness=outline_thickness)
+        cv2.polylines(outline_canvas, pts=np.int32([self.points]), isClosed=True, color=outline_colour, thickness=outline_thickness)
         self.outline_mask = outline_canvas
+        self.outline_colour = outline_colour

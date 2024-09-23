@@ -136,58 +136,23 @@ def calculate_frames_per_sec(number_of_frames_in_the_video, length_of_video):
     return number_of_frames_in_the_video / length_of_video
 
 
-def create_coloured_image_of_shape(sensor_value, mapper, mask_of_shapes_position_on_image, outline_array, background_colour_of_areas):
-    """
-    Function Goal : turn the mask of 0's and 1's of the shape into a coloured mask of 0's and the sensor value
-
-    sensor_value : integer - the sensor value number for that particular frame
-    mapper : the heatmap mapper that maps a number to a colour
-    mask_of_shapes_position_on_image : array of integer - the array of 0's and 1's, the mask, of the shape
-
-    return : 3D numpy array of integers, list of 1x3 arrays of integers - an array of a coloured mask of 0's and the sensor values of the shape and a list of the colours
-                                                                          of the coloured masks
-    """
-
-    array_mask = np.copy(mask_of_shapes_position_on_image)
-    outline = np.copy(outline_array)
-
-    if np.isnan(sensor_value):
-        # turn to grey
-        colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3))/255
-    else:
-        # get the colour we want the image to be
-        colour = mapper.to_rgba(sensor_value)[:3][::-1]
-
-    coloured_array_mask = np.where(array_mask != [0, 0, 0], colour, array_mask)
-
-    outlined_coloured_array_mask = np.where(outline == [1, 1, 1], background_configs["outline_colour"], coloured_array_mask)
-
-    return outlined_coloured_array_mask, colour
-
-
-def loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(df_row_of_sensor_values, shape_objects, mapper):
+def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
     """
     Function Goal : Be given a row from the DataFrame which is a row of the sensor values for 1 frame worth of video for each differnt shape in the list of shapes
                     and to turn the mask for each shape the colour output when the sensor value for its respective csv is put into the mapper
 
-    df_row_of_sensor_values : DataFrame - a row from the DataFrame which is a row of the sensor values for 1 frame worth of video for each differnt csv input
+    sensor_values : pd.Series - a row from the DataFrame which gives a sensor reading for each csv input
     shape_objects : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     mapper : the heatmap mapper that maps a number to a colour
 
-    return : list of arrays of integers, list of 1x3 arrays of integers - a list containing the coloured masks for each shape and the sensor values of the shape and a list
-                                                                          of the colours of the coloured masks
+    return : None
     """
-
-    list_of_coloured_masks_of_shapes = []
-    list_of_colours = []
-    for col, shape in zip(df_row_of_sensor_values, shape_objects):
-
-        coloured_array_mask, colour = create_coloured_image_of_shape(df_row_of_sensor_values.iloc[0, col], mapper, shape.filled_mask, shape.outline_mask)
-
-        list_of_colours.append(colour[::-1])
-        list_of_coloured_masks_of_shapes.append(coloured_array_mask)
-
-    return list_of_coloured_masks_of_shapes, list_of_colours
+    default_colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3)) / 255
+    outline_colour = heatmap_configs["borders"]["background"]["colour"]
+    for val, shape in zip(sensor_values, shape_objects):
+        area_colour = default_colour if np.isnan(val) else mapper.to_rgba(val)[:3][::-1]
+        shape.change_colour(fill_colour=area_colour, outline_colour=outline_colour)
+        shape.create_merged_mask()
 
 
 def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_height, event_duration_frame):
