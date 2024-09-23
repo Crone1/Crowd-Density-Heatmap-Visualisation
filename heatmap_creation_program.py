@@ -409,34 +409,34 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
     return image
 
 
-def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second, num_of_images_on_lhs, num_of_images_on_rhs, total_height):
+def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second, num_videos_on_lhs, num_videos_on_rhs, total_height):
     """
     Function goal : create a list of points which correspond to the coordinates of the midpoints of the edges of the boxes containing camera footage
 
     first_x : integer - the distance along the x-axis between the most left point and the edge of the first set of camera footage videos
     distance_between_first_nd_second : integer - the distance along the x-axis between the edge of the first set of camera footage videos and the start of the second
                                                  set of camera footage video
-    num_of_images_on_rhs : integer - the number of camera footage videos on the right hand side of the middle heatmap image
+    num_videos_on_rhs : integer - the number of camera footage videos on the right hand side of the middle heatmap image
     total_height : integer - the total height along the y-axis of the whole video
 
     return : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
                                                                             containing camera footage
     """
 
-    left_token_height = int(total_height/(2 * (num_of_images_on_lhs + 1)))
-    right_token_height = int(total_height/(2 * num_of_images_on_rhs))
+    left_token_height = int(total_height/(2 * (num_videos_on_lhs + 1)))
+    right_token_height = int(total_height/(2 * num_videos_on_rhs))
 
     list_of_camera_image_midpoints = []
-    for i in range(num_of_images_on_lhs + num_of_images_on_rhs):
-        if i < num_of_images_on_lhs:
+    for i in range(num_videos_on_lhs + num_videos_on_rhs):
+        if i < num_videos_on_lhs:
             # videos on the left hand side
             x = first_x
             y = ((2 * i) + 1) * left_token_height
 
-        elif i >= num_of_images_on_lhs and i < num_of_images_on_lhs + num_of_images_on_rhs:
+        elif i >= num_videos_on_lhs and i < num_videos_on_lhs + num_videos_on_rhs:
             #  videos on the right hand side
             x = first_x + distance_between_first_nd_second
-            y = ((2 * (i - num_of_images_on_lhs)) + 1) * right_token_height
+            y = ((2 * (i - num_videos_on_lhs)) + 1) * right_token_height
 
         # add the point to a list
         list_of_camera_image_midpoints.append((x, y))
@@ -444,14 +444,14 @@ def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second
     return list_of_camera_image_midpoints
 
 
-def merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image):
+def merge_lhs_and_rhs_frames(frames, num_videos_on_lhs, bar_plot_image):
     """
     Function goal : Take the list of the arrays corresponding to a frame from the different videos and separate these into the images that will go on the LHS and the RHS,
                     then merge all the LHS and RHS images, put a border around them and then add the bar plot to the LHS image.
 
     frames : A list of 3D numpy arrays [Array, Array, etc...] - A list of arrays of the different images from the different videos that corresponds to 1 frame of video
                                                                 The length of this list is the number of videos that will feature on the frame
-    num_of_images_on_lhs : integer - the number of images on the left hand side of the main heatmap image
+    num_videos_on_lhs : integer - the number of images on the left hand side of the main heatmap image
     bar_plot_image : 3D numpy array of integers - this array represents the image of the bar plot
 
     return : 3D numpy arrays of integers => Array, Array - the left array is an array corresponding to the image that will go to the left of the main heatmap image
@@ -459,8 +459,8 @@ def merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image):
     """
 
     start_slice = time.time()
-    lhs_list = frames[:num_of_images_on_lhs]
-    rhs_list = frames[num_of_images_on_lhs:]
+    lhs_list = frames[:num_videos_on_lhs]
+    rhs_list = frames[num_videos_on_lhs:]
     slice_list.append(time.time() - start_slice)
 
     start_concat_inside = time.time()
@@ -624,7 +624,7 @@ def merge_to_one_image(list_of_images, background, list_of_centres, names, canva
     return bordered_transparent_background_nd_shapes
 
 
-def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, background, colourmap_image, df_of_row, x_width_of_second_image, y_height_of_second_image,
+def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, background, colourmap_image, df_of_row, timer_width, timer_height,
                                                  width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, list_of_centres, read_videos,
                                                  num_of_images_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours, background_colour_of_areas):
     """
@@ -636,8 +636,8 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     colourmap_image : 3D numpy array of integers - an array that corresponds to the image of the colourmap
     df_of_row : DataFrame of integers - this is a single row from a DataFrame that contains a second and the sensor values corresponding to that particular second
                                         in the larger DataFrame
-    x_width_of_second_image : the width along the x-axis to make the array
-    y_height_of_second_image : the height along the y-axis to make the array
+    timer_width : the width along the x-axis to make the array
+    timer_height : the height along the y-axis to make the array
     width_of_left_and_right_images : the width along the x-axis to make the camera footage videos on either side of the main heatmap image
     dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ... etc.} - This is a dictionary of different integers representing particular
                                                                                                           seconds in the video mapped to an event that happend at that
@@ -645,9 +645,9 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
                                                                                                           box at the top of the image.
     event_duration_frame : integer - the number of frames either side of the event to display the text for that event
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
-    list_of_centres : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the centre points of each of the shapes
+    list_of_area_centres : a list of tuples of integers [(int, int), (int, int), ...etc.] -  a list containing the centre points of each of the shapes
     read_videos : list of the camera footage videos read ins - a list of the variables for each different video to read in the next frame from
-    num_of_images_on_lhs : integer - the number of camera footage videos on the left hand side of the middle heatmap image
+    num_videos_on_lhs : integer - the number of camera footage videos on the left hand side of the middle heatmap image
     list_of-shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
     height_of_text_box : the height of the text box on the y-axis
 
@@ -670,7 +670,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
         shapes_nd_background_image = np.concatenate((text_box, shapes_nd_background_image))
 
     # create the image of the second
-    second_image = create_image_of_second(df_of_row.Second.iloc[0], x_width_of_second_image, y_height_of_second_image)
+    second_image = create_image_of_second(df_of_row.Second.iloc[0], timer_width, timer_height)
 
     # merge the colourmap and the second images
     colmap_nd_second = np.concatenate((colourmap_image, second_image), axis=1)
@@ -702,7 +702,7 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
         start_merge = time.time()
 
         # crate the left and right images from the frames of the videos
-        lhs_img, rhs_img = merge_lhs_and_rhs_frames(frames, num_of_images_on_lhs, bar_plot_image)
+        lhs_img, rhs_img = merge_lhs_and_rhs_frames(frames, num_videos_on_lhs, bar_plot_image)
 
         merge_list.append(time.time() - start_merge)
 
@@ -720,18 +720,20 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
         fully_merged_image = np.concatenate((lhs_img, main_heatmap_image, rhs_img), axis=1)
 
         # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
-        list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(width_of_left_and_right_images, shapes_nd_background_image.shape[1],
-                                                                            num_of_images_on_lhs, len(frames) - num_of_images_on_lhs, fully_merged_image.shape[0])
+        list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
+            width_of_left_and_right_images, shapes_nd_background_image.shape[1],
+            num_videos_on_lhs, len(frames) - num_videos_on_lhs, fully_merged_image.shape[0]
+        )
 
-        final_image = draw_arrows_from_cameras_to_shapes(fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, width_of_left_and_right_images,
-                                                         height_of_text_box)
+        final_image = draw_arrows_from_cameras_to_shapes(
+            fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, width_of_left_and_right_images, height_of_text_box
+        )
 
         concat_outside_list.append(time.time() - start_concat)
 
     else:
         # create bar plot
-        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * border_configs["bar_plot"]["width"]),
-                                               names, list_of_colours)
+        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * border_configs["bar_plot"]["width"]), names, list_of_colours)
 
         # merge the main heatmap image and the bar plot
         final_image = np.concatenate((bar_plot_image, main_heatmap_image), axis=1)
@@ -755,33 +757,47 @@ def main():
 
     start_time = time.time()
 
-    # resize background image
+    # resize background image and add border
     video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
     background_image.resize(
         int(default_configs["video"]["proportions"]["width"]["background"] * video_width),
-        int(default_configs["video"]["proportions"]["height"]["background"] * video_height)
+        int(default_configs["video"]["proportions"]["height"]["background"] * video_height),
     )
 
     # dissect the area details
     shape_objects = create_area_masks(area_details, background_image.shape)
 
+    # turn the CSV data into a dataframe
+    start_joined_df_time = time.time()
+    list_of_dfs = read_csvs_into_dataframes(csv_file_paths)
+    joined_df = process_csv_dataframes(list_of_dfs)
+    joined_df_time = time.time() - start_joined_df_time
+
     # create the colourmap image
-    start_colmap = time.time()
+    start_colmap_time = time.time()
     colourmap_width = int(video_width*video_configs["proportions"]["width"]["colourmap"])
     colourmap_height = int(video_height * video_configs["proportions"]["height"]["colourmap"])
     cmap = ColourMap(colourmap_height, colourmap_width)
     cmap.create()
-    colmap_creation_time = time.time() - start_colmap
+    colmap_creation_time = time.time() - start_colmap_time
 
-    else:
-        joined_df = list_of_dfs[0]
+    # create the writer to write the image to the video
+    writer = cv2.VideoWriter(
+        filename=video_output_file_path,
+        fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
+        fps=video_configs["frame_rate"],
+        frameSize=(video_width, video_height),
+        isColor=True,
+    )
 
     event_duration_frame = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
 
-    if video_file_paths:
+    if not video_output_file_path:
+        read_videos = []
+        num_of_images_on_lhs = 0
+    else:
         # find out how many images will be on the lhs
         num_of_images_on_lhs = len(video_file_paths) // 2
-
         # create video caps
         read_videos = []
         for vid in video_file_paths:
@@ -790,22 +806,9 @@ def main():
             img = cv2.VideoCapture(vid)
             read_videos.append(img)
 
-    else:
-        read_videos = []
-        num_of_images_on_lhs = 0
-
-    # create mapper
-    mapper = matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=data_configs["min_value"], vmax=data_configs["max_value"]), cmap=colourmap_name)
-
-    # get width of second image
-    x_width_of_second_image = int(base_width*video_proportion_configs["width"]["timer"]) - (2 * border_configs["timer"]["width"])
-
-    # get the size of the colourmap image
-    colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * border_configs["timer"]["width"]))
-    colourmap_height = int(background.shape[0] * video_proportion_configs["height"]["colourmap"]) - (2 * border_configs["colourmap"]["width"])
-
-    # height of second image
-    y_height_of_second_image = colourmap_height
+    # get width & height of timer image
+    timer_width = int(base_width*video_proportion_configs["width"]["timer"]) - (2 * border_configs["timer"]["width"])
+    timer_height = colourmap_height
 
     # width of camera images beside heatmap
     width_of_left_and_right_images = int(base_width * video_proportion_configs["width"]["cameras"])
@@ -816,52 +819,35 @@ def main():
     # get the height of the video
     if event_details:
         height_of_video = (background.shape[0] + (2 * border_configs["background"]["width"])) + border_colmap.shape[0] + (height_of_text_box + (2 * border_configs["event_box"]["width"]))
-
     else:
         height_of_video = (background.shape[0] + (2 * border_configs["background"]["width"])) + border_colmap.shape[0]
-
     # get the width of the video
     if read_videos:
         width_of_video = base_width + (2 * border_configs["background"]["width"]) + (2 * width_of_left_and_right_images) + (2 * border_configs["cameras"]["width"]) + (2 * border_configs["bar_plot"]["width"])
-
     else:
         width_of_video = base_width + (2 * border_configs["background"]["width"]) + width_of_left_and_right_images  + (2 * border_configs["bar_plot"]["width"])
 
-    # turn the data into a dataframe
-    start_joined_df_time = time.time()
-    list_of_dfs = read_csvs_into_dataframes(csv_file_paths)
-    joined_df = process_csv_dataframes(list_of_dfs)
-    joined_df_time = time.time() - start_joined_df_time
-
-    # create the writer to write the image to the video
-    writer = cv2.VideoWriter(filename=output_file_name, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=frames_per_second, frameSize=(width_of_video, height_of_video),
-                             isColor=True)
-
-    print("time before iteration through rows = {}".format(time.time() - start_time))
-    new_start_time = time.time()
 
     # iterate through each row in the dataframe
-    i = 0
-    total = len(joined_df)
-    for index, r in joined_df.iterrows():
-        print("Row {}, {:.3g}% Done".format(str(i), (100 * i/total)))
+    print("time before iteration through rows = {}".format(time.time() - start_time))
+    new_start_time = time.time()
+    for i, row in joined_df.reset_index(drop=True).iterrows():
+        print("Row {}, {:.3g}% Done".format(str(i), (100 * i/len(joined_df))))
 
-        df_row = pd.DataFrame(r).T
-
-        start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = time.time()
+        df_row = pd.DataFrame(row).T
 
         # create the images of the shapes from the sensor values and areas
+        start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = time.time()
         list_of_coloured_shape_images, list_of_colours = loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images(
             df_row.loc[:, df_row.columns.difference(["Second"])], shape_objects, mapper)
-
         loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list.append(
             time.time() - start_loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images)
 
         start_turn_all_the_different_images_into_one_image = time.time()
 
         # merge these images with the image of the colourmap and of the second
-        merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, x_width_of_second_image,
-                                                                    y_height_of_second_image, width_of_left_and_right_images, event_details,
+        merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, timer_width,
+                                                                    timer_height, width_of_left_and_right_images, event_details,
                                                                     event_duration_frame, csv_names, shape_objects, read_videos, num_of_images_on_lhs,
                                                                     height_of_text_box, list_of_colours)
 
@@ -874,17 +860,15 @@ def main():
         print(time.time() - new_start_time)
         new_start_time = time.time()
 
-        i = i + 1
-
     writer.release()
-    print("The video was written to the file with the name '" + output_file_name + "'.")
+    print("The video was written to the file with the name '" + video_output_file_path + "'.")
 
-    print("colourmap = {}".format(sum(colmap_creation_time)))
-    print("loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = {}".format(
-                                                                    sum(loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list)))
-    print("turn_all_the_different_images_into_one_image = {}".format(sum(turn_all_the_different_images_into_one_image_list)))
+    print("colourmap = {}".format(colmap_creation_time))
+    print("joined_df = {}".format(joined_df_time))
+    print("read_videos_time = {}".format(read_videos_time))
+    print("define heatmap = {}".format(sum(define_heatmap_times)))
+
     print("other stuff = {}".format(sum(shapes_list)))
-    print("merge_heatmap = {}".format(sum(merge_heatmap)))
     print("video stuff = {}".format(sum(video_list)))
     print("video_2_frames = {}".format(sum(video_2_frames_list)))
     print("read in videos = {}".format(sum(read_in_list)))
