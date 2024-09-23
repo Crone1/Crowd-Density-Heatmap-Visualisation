@@ -6,13 +6,13 @@ import sys
 import cv2
 import yaml
 
-from image import Image
+from data_models.image import Image
 
 from utils.input_utils import exit_if_false, exit_if_try_fails
 
 
 # read the default configuration variables
-with open("configs/default_configs.yaml", "r") as config_file:
+with open("../configs/default_configs.yaml", "r") as config_file:
     default_configs = yaml.load(config_file, Loader=yaml.FullLoader)
 default_drawing_output_file = default_configs["drawing"]["output_file_name"]
 

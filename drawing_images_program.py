@@ -5,14 +5,16 @@ This program needs the path to a YAML/JSON Configuration file
 It returns a file containing a list of dictionaries containing the details of the coordinates of the areas drawn when this program is run.
 """
 
-# imports
+# import libraries
 import numpy as np
 import json
 import yaml
 import cv2
 
-from drawing_inputs import DrawingInputHandler
+# import helper classes
+from input_handlers.drawing_inputs import DrawingInputHandler
 
+# import utilities
 from utils.maths_utils import get_distance
 
 

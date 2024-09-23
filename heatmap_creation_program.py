@@ -4,22 +4,24 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import matplotlib
 import yaml
 import time
 import cv2
 
-from video_reader import VideoReaderQueue
-from heatmap_inputs import HeatmapInputHandler
-from image import Image
-from shape import Shape
-from colourmap import ColourMap
+# import helper classes
+from components.colourmap import ColourMap
+from data_models.image import Image
+from data_models.shape import Shape
+from io.video_reader import VideoReaderQueue
+from input_handlers.heatmap_inputs import HeatmapInputHandler
 
+# import utilities
 from utils.input_utils import exit_if_false
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
 
 
+# read configurations
 with open("configs/video_resolutions.yaml", "r") as resolution_file:
     resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
 with open("configs/default_configs.yaml", "r") as default_config_file:

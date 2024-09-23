@@ -17,6 +17,17 @@ class VideoReader:
         self.img_shape = None
         self._set_video_info()
 
+    def _set_video_info(self):
+
+        vid = cv2.VideoCapture(self.filename)
+        _, img = vid.read()
+
+        self.nframes = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.framerate = vid.get(cv2.CAP_PROP_FPS)
+        self.img_shape = img.shape
+
+        vid.release()
+
     def load_video(self, interval=1):
         """
         Function Goal: Loads the images of the video
@@ -58,17 +69,6 @@ class VideoReader:
         vid.release()
 
         return img
-
-    def _set_video_info(self):
-
-        vid = cv2.VideoCapture(self.filename)
-        _, img = vid.read()
-
-        self.nframes = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.framerate = vid.get(cv2.CAP_PROP_FPS)
-        self.img_shape = img.shape
-
-        vid.release()
 
 
 class VideoReaderQueue(VideoReader):
