@@ -9,9 +9,9 @@ from configs.cv2_config import cv2_dict
 
 
 # read the colourmap customisation configuration variables
-with open("../configs/colourmap_configs.yaml", "r") as colmap_config_file:
+with open("configs/colourmap_configs.yaml", "r") as colmap_config_file:
     colourmap_configs = yaml.load(colmap_config_file, Loader=yaml.FullLoader)
-with open("../configs/default_configs.yaml", "r") as default_config_file:
+with open("configs/default_configs.yaml", "r") as default_config_file:
     data_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)["data"]
 
 
