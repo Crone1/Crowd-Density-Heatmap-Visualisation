@@ -12,12 +12,12 @@ class Shape:
 
     @staticmethod
     def from_dict(data):
-        shape_type = data.get("type")
-        if shape_type == "Rectangle":
+        shape_type = data.get("type").lower()
+        if shape_type == "rectangle":
             return Rectangle(data["start_point"], data["end_point"])
-        elif shape_type == "Circle":
+        elif shape_type == "circle":
             return Circle(data["centre"], data["radius"])
-        elif shape_type == "Polygon":
+        elif shape_type == "polygon":
             return Polygon(data["points"])
         else:
             raise ValueError(f"Unknown shape type: {shape_type}. Valid types are 'polygon', 'circle', and 'rectangle'.")

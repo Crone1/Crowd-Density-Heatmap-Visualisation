@@ -13,11 +13,13 @@ class Image:
         self.shape = self.image.shape
         self.rotated = False
 
-    def from_path(self, path):
-        self.__init__(path=path)
+    @classmethod
+    def from_path(cls, path):
+        return cls(path=path)
 
-    def from_array(self, array):
-        self.__init__(array=array)
+    @classmethod
+    def from_array(cls, array):
+        return cls(array=array)
 
     def resize(self, desired_width, desired_height):
         """

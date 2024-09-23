@@ -36,7 +36,6 @@ border_configs = heatmap_configs["borders"]
 font_configs = heatmap_configs["fonts"]
 arrow_configs = heatmap_configs["arrows"]
 background_configs = heatmap_configs["background"]
-colourmap_configs = heatmap_configs["colourmap"]
 event_box_configs = heatmap_configs["events_box"]
 
 

@@ -246,7 +246,7 @@ class HeatmapInputHandler:
 
         # process data
         self.background_image = self._process_background_image(args.background_image_path)
-        self.csv_file_paths = self._get_file_paths(args.csv_folder, "csv")
+        self.csv_file_paths = self._get_file_paths(args.csv_folder_path, "csv")
         self.video_output_file_path = self._process_output_file_name(args.video_output_file_path)
         if args.area_details_file_path == "draw":
             self.area_details = drawing_program(self.background_image, default_drawing_output_file)
@@ -256,7 +256,7 @@ class HeatmapInputHandler:
         if args.events_file_path != "none":
             self.event_details = self._get_event_details(args.events_file_path)
         if args.video_folder_path != "none":
-            self.video_file_paths = self._get_file_paths(args.video_folder, "mp4")
+            self.video_file_paths = self._get_file_paths(args.video_folder_path, "mp4")
 
     def _get_variables_from_user(self):
 
@@ -265,8 +265,8 @@ class HeatmapInputHandler:
         self.background_image = self._process_background_image(supplied_background_image_path)
 
         # csv folder
-        supplied_csv_folder = input("Please enter the path to the folder containing the CSV data used to colour the heatmap: ")
-        self.csv_file_paths = self._get_file_paths(supplied_csv_folder, "csv")
+        supplied_csv_folder_path = input("Please enter the path to the folder containing the CSV data used to colour the heatmap: ")
+        self.csv_file_paths = self._get_file_paths(supplied_csv_folder_path, "csv")
 
         # video output file name
         video_output_file_path = input("Please enter the path to the file where the heatmap video will be output to (Press 'Enter' for default): ")
@@ -290,9 +290,9 @@ class HeatmapInputHandler:
             self.event_details = self._get_event_details(supplied_events_file_path)
 
         # videos folder
-        supplied_videos_folder = input("Please enter the path of the folder containing the video footage which accompanies the CSV data (Press 'Enter' to skip): ")
-        if supplied_videos_folder != "":
-            self.video_file_paths = self._get_file_paths(supplied_videos_folder, "mp4")
+        supplied_videos_folder_path = input("Please enter the path of the folder containing the video footage which accompanies the CSV data (Press 'Enter' to skip): ")
+        if supplied_videos_folder_path != "":
+            self.video_file_paths = self._get_file_paths(supplied_videos_folder_path, "mp4")
 
         # Let the user know the inputs have all been received
         print("\nThanks for the inputs! Making the video now, please wait!")
