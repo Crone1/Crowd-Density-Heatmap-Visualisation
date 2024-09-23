@@ -123,19 +123,6 @@ def process_csv_dataframes(list_of_dfs):
     return resampled_df.ffill(limit_area="inside")
 
 
-def calculate_frames_per_sec(number_of_frames_in_the_video, length_of_video):
-    """
-    Function Goal : To calculate the amount of frames per second that would have to be shown in order to create a video of the desired length
-
-    number_of_frames_in_the_video : integer - the number of frames worth of data in the input csvs
-    length_of_video : integer - the desired length in seconds that you want the video to be
-
-    return : float - the amount of frames per second that would have to be shown in order to create a video of this length
-    """
-
-    return number_of_frames_in_the_video / length_of_video
-
-
 def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
     """
     Function Goal : Be given a row from the DataFrame which is a row of the sensor values for 1 frame worth of video for each differnt shape in the list of shapes
@@ -789,9 +776,7 @@ def main():
     else:
         joined_df = list_of_dfs[0]
 
-    frames_per_second = calculate_frames_per_sec(len(joined_df.Second), video_configs["length"])
-
-    event_duration_frame = int(frames_per_second * event_box_configs["text_duration"])
+    event_duration_frame = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
 
     if video_file_paths:
         # find out how many images will be on the lhs
