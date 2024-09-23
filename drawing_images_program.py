@@ -12,7 +12,7 @@ import yaml
 import cv2
 import sys
 
-from DrawingInputs import DrawingInputs
+from drawing_inputs import DrawingInputs
 from utils.maths_utils import get_distance
 
 

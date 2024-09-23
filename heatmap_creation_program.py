@@ -10,9 +10,9 @@ import time
 import sys
 import cv2
 
-from VideoReader import VideoReaderQueue
-from HeatmapInputs import HeatmapInputs
-from Shape import Shape
+from video_reader import VideoReaderQueue
+from heatmap_inputs import HeatmapInputs
+from shape import Shape
 from colourmap import ColourMap
 
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
