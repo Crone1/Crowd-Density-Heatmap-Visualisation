@@ -4,8 +4,12 @@ import cv2
 import json
 import yaml
 import os
+import sys
 
 from drawing_images_program import main as drawing_program
+
+from image import Image
+
 from utils.file_utils import add_extension, get_filename_no_extension, is_file_with_valid_extension
 from utils.input_utils import exit_if_empty, exit_if_try_fails
 
@@ -73,7 +77,7 @@ class HeatmapInputHandler:
         return file_paths
 
     @staticmethod
-    def process_background_image_path(image_path):
+    def _process_background_image(image_path):
 
         universal_criteria = "the path to the background image points to a valid image file."
         # check it's not empty
@@ -90,8 +94,8 @@ class HeatmapInputHandler:
             error="The file path entered does not point to a valid image file.",
             criteria=universal_criteria
         )
-
-        return image_path
+        # read the image
+        return Image.from_path(image_path)
 
     @staticmethod
     def process_output_file_name(file_name):
@@ -243,6 +247,7 @@ class HeatmapInputHandler:
         args = parser.parse_args()
 
         # process data
+        self.background_image = self._process_background_image(args.background_image_path)
         self.csv_file_paths = self._get_file_paths(args.csv_folder, "csv")
         self.video_file_paths = self._get_file_paths(args.video_folder, "mp4")
         self.background_image_path = self.process_background_image_path(args.background_image_path)
@@ -259,7 +264,9 @@ class HeatmapInputHandler:
 
     def _get_variables_from_user(self):
 
-        print("\nHello!")
+        # background image
+        supplied_background_image_path = input("Please enter the path to the background image: ")
+        self.background_image = self._process_background_image(supplied_background_image_path)
 
         # csv folder
         print("\nPlease enter the path to the folder containing the csvs needed to colour the heatmap.")

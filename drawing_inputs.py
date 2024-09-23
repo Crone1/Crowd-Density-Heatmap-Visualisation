@@ -1,11 +1,14 @@
 
 import argparse
 import os.path
+import sys
 
 import cv2
 import yaml
 
-from utils.input_utils import exit_if_empty, exit_if_try_fails
+from image import Image
+
+from utils.input_utils import exit_if_false, exit_if_try_fails
 
 
 # read the default configuration variables
@@ -41,8 +44,8 @@ class DrawingInputHandler:
             error="The file path entered does not point to a valid image file.",
             criteria=universal_criteria
         )
-
-        return image_path
+        # read the image
+        return Image.from_path(image_path)
 
     @staticmethod
     def _process_output_file_path(file_path):
@@ -86,14 +89,14 @@ class DrawingInputHandler:
         args = parser.parse_args()
 
         # process data
-        self.background_path = self._process_background_image_path(args.background_image_path)
+        self.background = self._process_background_image_path(args.background_image_path)
         self.output_path = self._process_output_file_path(args.output_file_path)
 
     def _get_variables_from_user(self):
 
         # background image
         background_path = input("Please enter the path to the background image: ")
-        self.background_path = self._process_background_image_path(background_path)
+        self.background = self._process_background_image_path(background_path)
 
         # output file
         supplied_output_file_path = input(

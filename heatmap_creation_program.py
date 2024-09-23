@@ -7,11 +7,11 @@ import numpy as np
 import matplotlib
 import yaml
 import time
-import sys
 import cv2
 
 from video_reader import VideoReaderQueue
 from heatmap_inputs import HeatmapInputHandler
+from image import Image
 from shape import Shape
 from colourmap import ColourMap
 
@@ -52,29 +52,6 @@ border_list = []
 read_in_list = []
 merge_heatmap = []
 colmap_creation = []
-
-
-def reshape_background_image(img_name, base_width):
-    """
-    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
-
-    img_name : string - the name of the file containing the image you want to reshape
-    base_width : integer - the width that you want the image to be
-
-    return : 3D numpy array of integers - this array represents the image in its reshaped form in a way that python can deal with.
-    """
-
-    img = cv2.imread(img_name)
-
-    height, width = img.shape[:2]
-
-    # calculate the desired height of the image based on the proportion of the original image and the desired width
-    width_percent = (base_width / float(img.shape[1]))
-    height_size = int(img.shape[0] * width_percent)
-
-    reshaped_img = cv2.resize(img, (base_width, height_size))
-
-    return reshaped_img
 
 
 def create_area_masks(list_of_area_details, img_shape):
@@ -877,43 +854,17 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
     return final_image
 
 
-def write_an_image_to_a_video(writer, img):
-    """
-    Function Goal : take an array corresponding to an image and write this image to a video so that it is one frame of the video
-
-    writer : all the details to do with writing the images to the video
-    img : 3D numpy array of integers - the array that corresponds to the image representing one frame of the video
-
-    return : None
-    """
-
-    writer.write(np.uint8(img * 255))
-
-
-def write_an_image_to_a_folder(output_folder_name, img):
-    """
-    Function Goal : take an array corresponding to an image and write this image to a folder
-
-    output_folder_name : string - the name of the folder that you want to write the images to
-    img : 3D numpy array of integers - the array that corresponds to the image representing one frame of the video
-
-    return : None
-    """
-
-    cv2.imwrite(output_folder_name, img*255)
-
-
 def main():
     start_time = time.time()
 
     # get input variables
     start_read_time = time.time()
     inputs = HeatmapInputHandler()
+    background_image = inputs.background_image
     csv_file_paths = inputs.csv_file_paths
     video_file_paths = inputs.video_file_paths
     area_details = inputs.area_details
     event_details = inputs.event_details
-    background_image_path = inputs.background_image_path
     output_file_name = inputs.output_file_name
     # TODO: remove base_width
     base_width = inputs.base_width
@@ -922,26 +873,15 @@ def main():
     # deal with inputs
     csv_names = [csv[:-10] for csv in csv_file_paths]
 
-    # reshape background
-    background = reshape_background_image(background_image_path, base_width)
+    # resize background image
+    video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
+    background_image.resize(
+        int(default_configs["video"]["proportions"]["width"]["background"] * video_width),
+        int(default_configs["video"]["proportions"]["height"]["background"] * video_height)
+    )
 
     # dissect the area details
-    shape_objects = create_area_masks(area_details, background_image.image.shape)
-
-    """
-    # rotate shape_arrays in list
-    new_list_of_shape_arrays = []
-    for shape_array in list_of_shape_arrays:
-        new_shape_array = np.zeros((shape_array.shape[1], shape_array.shape[0], 3), np.uint8)
-        cv2.transpose(shape_array, new_shape_array)
-        cv2.flip(new_shape_array, 1, new_shape_array)
-
-        new_list_of_shape_arrays.append(new_shape_array)
-        plt.imshow(new_shape_array)
-        plt.show()
-
-    list_of_shape_arrays = new_list_of_shape_arrays
-    """
+    shape_objects = create_area_masks(area_details, background_image.shape)
 
     # create the colourmap image
     start_colmap = time.time()
@@ -1059,13 +999,12 @@ def main():
         turn_all_the_different_images_into_one_image_list.append(time.time() - start_turn_all_the_different_images_into_one_image)
 
         # write the images to the video
-        # print(merged_image.shape)
-        write_an_image_to_a_video(writer, merged_image)
+        final_frame = Image.from_array(merged_image)
+        final_frame.write_to_video(writer)
 
         print(time.time() - new_start_time)
         new_start_time = time.time()
 
-        #write_an_image_to_a_folder("folder of images/img" + str(i) + ".png", merged_image)
         i = i + 1
 
     writer.release()

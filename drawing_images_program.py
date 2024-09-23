@@ -10,7 +10,6 @@ import numpy as np
 import json
 import yaml
 import cv2
-import sys
 
 from drawing_inputs import DrawingInputHandler
 
@@ -34,28 +33,6 @@ start_x, start_y = -1, -1
 area_details = []
 poly_points = []
 img_hist = []
-
-
-def reshape_background_image(img, size):
-    """
-    Function Goal : reshape the image so that it still maintains the same proportion but that its width is the base_width
-
-    img : 3D numpy array of integers - the array representing the image you want to reshape
-    size : tuple of integers - the height and width you want the image to be
-
-    return : 3D numpy array of integers - this array represents the image in its reshaped form in a way that python can deal with.
-    """
-
-    # get image orientation in line with size
-    height, width, _ = img.shape
-    desired_width, desired_height = size
-    if (desired_height <= desired_width) and not (height <= width):
-        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-    elif (desired_width <= desired_height) and not (width <= height):
-        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-
-    # scale to correct resolution
-    return cv2.resize(img, size)
 
 
 def print_how_to_use_image_drawer():
@@ -212,20 +189,18 @@ def draw_on_image(image):
     return area_details
 
 
-def main(background_image_path, output_path):
+def main(background, output_path):
 
-    # read image
-    raw_img = cv2.imread(background_image_path)
+    # resize image
     video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
-    desired_size = (
+    background.resize(
         int(default_configs["video"]["proportions"]["width"]["background"] * video_width),
         int(default_configs["video"]["proportions"]["height"]["background"] * video_height)
     )
-    background = reshape_background_image(raw_img, desired_size)
 
     # draw areas
     print_how_to_use_image_drawer()
-    area_details = draw_on_image(background)
+    area_details = draw_on_image(background.image)
 
     # output to file
     with open(output_path, 'w') as file_of_area_details:
@@ -238,4 +213,4 @@ def main(background_image_path, output_path):
 
 if __name__ == '__main__':
     inputs = DrawingInputHandler()
-    main(inputs.background_path, inputs.output_path)
+    main(inputs.background, inputs.output_path)
