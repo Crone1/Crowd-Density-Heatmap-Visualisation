@@ -15,29 +15,7 @@ from HeatmapInputs import HeatmapInputs
 from Shape import Shape
 
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
-
-
-# dictionary to use built in openCV variables
-cv2_dict = {
-
-    "BORDER_REPLICATE": cv2.BORDER_REPLICATE,
-    "BORDER_CONSTANT": cv2.BORDER_CONSTANT,
-
-    "FONT_HERSHEY_SIMPLEX": cv2.FONT_HERSHEY_SIMPLEX,
-    "FONT_HERSHEY_PLAIN": cv2.FONT_HERSHEY_PLAIN,
-    "FONT_HERSHEY_DUPLEX": cv2.FONT_HERSHEY_DUPLEX,
-    "FONT_HERSHEY_COMPLEX": cv2.FONT_HERSHEY_COMPLEX,
-    "FONT_HERSHEY_TRIPLEX": cv2.FONT_HERSHEY_TRIPLEX,
-    "FONT_HERSHEY_COMPLEX_SMALL": cv2.FONT_HERSHEY_COMPLEX_SMALL,
-    "FONT_HERSHEY_SCRIPT_SIMPLEX": cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
-    "FONT_HERSHEY_SCRIPT_COMPLEX": cv2.FONT_HERSHEY_SCRIPT_COMPLEX,
-    "FONT_ITALIC": cv2.FONT_ITALIC,
-
-    "FILLED": cv2.FILLED,
-    "LINE_4": cv2.LINE_4,
-    "LINE_8": cv2.LINE_8,
-    "LINE_AA": cv2.LINE_AA,
-}
+from configs.cv2_config import cv2_dict
 
 
 # read the heatmap customisation configuration variables
