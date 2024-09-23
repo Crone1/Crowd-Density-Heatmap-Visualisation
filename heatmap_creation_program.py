@@ -16,7 +16,6 @@ from io.video_reader import VideoReaderQueue
 from input_handlers.heatmap_inputs import HeatmapInputHandler
 
 # import utilities
-from utils.input_utils import exit_if_false
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
 
@@ -860,30 +859,18 @@ def turn_all_the_different_images_into_one_image(list_of_coloured_shapes, backgr
 
 
 def main():
-    start_time = time.time()
 
     # get input variables
-    start_read_time = time.time()
     inputs = HeatmapInputHandler()
+    inputs.validate()
     background_image = inputs.background_image
     csv_file_paths = inputs.csv_file_paths
     video_file_paths = inputs.video_file_paths
     area_details = inputs.area_details
     event_details = inputs.event_details
     video_output_file_path = inputs.video_output_file_path
-    full_read_time = time.time() - start_read_time
 
-    # validate inputs
-    exit_if_false(
-        len(csv_file_paths) == len(area_details),
-        error="The number of areas you drew and the number of csvs you supplied do not match.",
-        criteria="to draw the same amount of areas on the image as csvs are in the supplied folder."
-    )
-    exit_if_false(
-        len(video_file_paths) == len(csv_file_paths),
-        error="The number of videos in the folder supplied does not match the number of csvs supplied.",
-        criteria="the number of videos in the supplied folder is the same as the number of csvs in the supplied folder."
-    )
+    start_time = time.time()
 
     # resize background image
     video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
@@ -1031,7 +1018,7 @@ def main():
     print("slice = {}".format(sum(slice_list)))
     print("border = {}".format(sum(border_list)))
 
-    print("Time taken = {}".format(time.time() - start_time - full_read_time))
+    print("Time taken = {}".format(time.time() - start_time))
 
 
 if __name__ == '__main__':

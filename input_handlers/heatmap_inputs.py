@@ -296,3 +296,17 @@ class HeatmapInputHandler:
 
         # Let the user know the inputs have all been received
         print("\nThanks for the inputs! Making the video now, please wait!")
+
+    def validate(self):
+        # check number of CSVs == number of areas
+        exit_if_false(
+            len(self.csv_file_paths) == len(self.area_details),
+            error="The number of areas you drew and the number of csvs you supplied do not match.",
+            criteria="to draw the same amount of areas on the image as csvs are in the supplied folder."
+        )
+        # check number of videos == number of CSVs
+        exit_if_false(
+            len(self.video_file_paths) == len(self.csv_file_paths),
+            error="The number of videos in the folder supplied does not match the number of csvs supplied.",
+            criteria="the number of videos in the supplied folder is the same as the number of csvs in the supplied folder."
+        )
