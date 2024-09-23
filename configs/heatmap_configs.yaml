@@ -14,10 +14,6 @@ borders:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
     width: 1
-  colourmap:
-    colour: [0, 0, 0]
-    type: BORDER_CONSTANT
-    width: 1
   event_box:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
@@ -71,45 +67,6 @@ background:
   transparency_alpha: 0.5
   transparency_gamma: 0
   colour_when_nan: [130, 130, 140]
-
-
-# configurate colourmap construction
-colourmap:
-  name: plasma
-  proportions:
-    height:
-      inner_border_bottom: 0.06
-      inner_border_top: 0.1
-      index: 0.225
-      heading: 0.275
-      line_and_text_gap: 0.06
-    width:
-      inner_border: 0.1
-  borders:
-    inner:
-      colour: [1, 1, 1]
-      type: BORDER_CONSTANT
-  fonts:
-    heading:
-      colour: [0, 0, 0]
-      size: 0.6
-      thickness: 1
-      type: FONT_HERSHEY_SIMPLEX
-      line_type: 1
-    index:
-      colour: [0, 0, 0]
-      size: 0.5
-      thickness: 1
-      type: FONT_HERSHEY_SIMPLEX
-      line_type: LINE_AA
-    scale:
-      colour: [0, 0, 0]
-      size: 1
-      thickness: 1
-      type: FONT_HERSHEY_SIMPLEX
-      line_type: LINE_AA
-    seperator:
-      colour: [0, 0, 0]
 
 
 # configurate events text box

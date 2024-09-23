@@ -13,6 +13,7 @@ import cv2
 from VideoReader import VideoReaderQueue
 from HeatmapInputs import HeatmapInputs
 from Shape import Shape
+from colourmap import ColourMap
 
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
@@ -672,131 +673,6 @@ def video_to_frames(read_videos, width, total_height):
     return resized_frames, height_of_frame
 
 
-def turn_numbers_into_abbreviations(num):
-    """
-    Function Goal : take a number and turn it into a string of that number with only 3 digits and using abbreviations such a K,M,B,T to shorten its length
-
-    num : integer - a number
-
-    return : string - the number in its abbreviated form
-    """
-
-    num_digits = len(str(num))
-
-    if 3 < num_digits < 7:
-        new_num = "{:.3g}".format(num/1000) + "K"
-
-    elif 6 < num_digits < 10:
-        new_num = "{:.3g}".format(num/1000000) + "M"
-
-    elif 9 < num_digits < 13:
-        new_num = "{:.3g}".format(num/1000000000) + "B"
-
-    elif 12 < num_digits < 16:
-        new_num = "{:.3g}".format(num/1000000000000) + "T"
-
-    else:
-        new_num = "{:.3g}".format(num)
-
-    return new_num
-
-
-def create_colourmap(size, mapper, num_dividers):
-    """
-    Function Goal : create the colourmap
-
-    size : tuple of integers (int, int, int) - the size (height & width & colour) of the colourmap that we are going to create
-    mapper : the heatmap mapper that maps a number to a colour
-    num_dividers : integer - the number of values on the scale of the colourmap
-
-    return : a 3D numpy array of integers - an array that corresponds to the colourmap image that was created
-    """
-
-    inner_colourmap_horizontal_border_width = int(size[1] * colourmap_configs["proportions"]["width"]["inner_border"])
-    space_between_line_and_text = int(size[0] * colourmap_configs["proportions"]["height"]["line_and_text_gap"])
-    inner_colourmap_bottom_border_height = int(size[0] * colourmap_configs["proportions"]["height"]["inner_border_bottom"])
-    inner_colourmap_top_border_height = int(size[0] * colourmap_configs["proportions"]["height"]["inner_border_top"])
-    height_of_box_for_indexes = int(size[0] * colourmap_configs["proportions"]["height"]["index"])
-    heading_box_height = int(size[0] * colourmap_configs["proportions"]["height"]["heading"])
-
-    height_of_inner_colmap = size[0] - inner_colourmap_bottom_border_height - inner_colourmap_top_border_height - height_of_box_for_indexes - heading_box_height
-
-    width_of_inner_colmap = size[1] - (2 * inner_colourmap_horizontal_border_width)
-
-    starting_y_coord_of_inner_colmap = size[0] - height_of_inner_colmap - inner_colourmap_bottom_border_height
-
-    colmap_image = np.ones(size)
-
-    # put spectrum of colours on colourmap colours map
-    sensor_value_range = data_configs["max_value"] - data_configs["min_value"]
-    step = sensor_value_range/(width_of_inner_colmap-1)
-    i = inner_colourmap_horizontal_border_width
-    sensor_value = data_configs["min_value"]
-    while sensor_value < data_configs["max_value"]:
-        colour = mapper.to_rgba(sensor_value)[:3][::-1]
-
-        colmap_image[starting_y_coord_of_inner_colmap:starting_y_coord_of_inner_colmap + height_of_inner_colmap, i, :] = colour
-
-        sensor_value += step
-        i = i + 1
-
-    # add lines for the scale on the map
-    width_of_inner_colourmap = size[1] - (2 * inner_colourmap_horizontal_border_width)
-    list_of_coordinates_to_draw_lines = []
-    colourmap_divider = width_of_inner_colourmap/num_dividers
-
-    # get a list of the x-coordinates to draw the lines at
-    for i in range(0, num_dividers + 1):
-        coord = int(i * colourmap_divider) + inner_colourmap_horizontal_border_width
-        list_of_coordinates_to_draw_lines.append(coord)
-
-    start_y_coord_of_line_for_scale = heading_box_height + height_of_box_for_indexes + space_between_line_and_text
-
-    # draw the lines along these x-coordinate lines
-    for coord in list_of_coordinates_to_draw_lines:
-        colmap_image[start_y_coord_of_line_for_scale:size[0] - inner_colourmap_bottom_border_height, coord-1:coord+1, :] = colourmap_configs["fonts"]["scale"]["colour"]
-
-    # add the scale for the colourmap
-
-    list_of_index_values = []
-    sensor_value_divider = sensor_value_range/num_dividers
-
-    for i in range(0, num_dividers + 1):
-        abbreviated_num = turn_numbers_into_abbreviations(int(i * sensor_value_divider) + data_configs["min_value"])
-        list_of_index_values.append(abbreviated_num)
-
-    for i in range(len(list_of_index_values)):
-
-        index = list_of_index_values[i]
-        index_width, index_height = cv2.getTextSize(index, cv2_dict[colourmap_configs["fonts"]["index"]["type"]], colourmap_configs["fonts"]["index"]["size"], colourmap_configs["fonts"]["index"]["thickness"])[0]
-
-        start_y_of_index = height_of_box_for_indexes + heading_box_height
-        start_x_of_index = int(list_of_coordinates_to_draw_lines[i] - index_width/2)
-
-        cv2.putText(colmap_image, index, (start_x_of_index, start_y_of_index), cv2_dict[colourmap_configs["fonts"]["index"]["type"]], colourmap_configs["fonts"]["index"]["size"],
-                    colourmap_configs["fonts"]["index"]["colour"], lineType=cv2_dict[colourmap_configs["fonts"]["index"]["line_type"]], thickness=colourmap_configs["fonts"]["index"]["thickness"])
-
-    # draw black line
-    colmap_image[heading_box_height+1, :, :] = colourmap_configs["fonts"]["seperator"]["colour"]
-
-    heading = "{} in each area".format(data_configs["title"])
-
-    heading_width, heading_height = cv2.getTextSize(heading, cv2_dict[colourmap_configs["fonts"]["heading"]["type"]], colourmap_configs["fonts"]["heading"]["size"],
-                                                    colourmap_configs["fonts"]["heading"]["thickness"])[0]
-
-    start_x_of_heading = int(size[1]/2 - heading_width/2)
-    start_y_of_heading = int(heading_box_height/2 + heading_height/2)
-
-    cv2.putText(colmap_image, heading, (start_x_of_heading, start_y_of_heading), cv2_dict[colourmap_configs["fonts"]["heading"]["type"]], colourmap_configs["fonts"]["heading"]["size"],
-                colourmap_configs["fonts"]["heading"]["colour"], lineType=colourmap_configs["fonts"]["heading"]["line_type"], thickness=colourmap_configs["fonts"]["heading"]["thickness"])
-
-    # border colourmap
-    border_colmap = cv2.copyMakeBorder(colmap_image, top=border_configs["colourmap"]["width"], bottom=border_configs["colourmap"]["width"], left=border_configs["colourmap"]["width"], right=border_configs["colourmap"]["width"],
-                                       borderType=cv2_dict[border_configs["colourmap"]["type"]], value=border_configs["colourmap"]["colour"])
-
-    return border_colmap
-
-
 def create_image_of_second(second, x_width, y_height):
     """
     Function Goal : Take an integer second and create an array corresponding to an image that is a particular width and height that contains the second fed in
@@ -1075,6 +951,14 @@ def main():
     list_of_shape_arrays = new_list_of_shape_arrays
     """
 
+    # create the colourmap image
+    start_colmap = time.time()
+    colourmap_width = int(video_width*video_configs["proportions"]["width"]["colourmap"])
+    colourmap_height = int(video_height * video_configs["proportions"]["height"]["colourmap"])
+    cmap = ColourMap(colourmap_height, colourmap_width)
+    cmap.create()
+    colmap_creation_time = time.time() - start_colmap
+
     if len(csv_file_paths) != len(area_details):
         print("\nThe number of areas you drew and the number of csvs you supplied do not match. Please re-run the program drawing the same amount of areas on the image as csvs you supplied.")
         exit(0)
@@ -1121,11 +1005,6 @@ def main():
     # get the size of the colourmap image
     colourmap_width = background.shape[1] - (x_width_of_second_image + (2 * border_configs["timer"]["width"]))
     colourmap_height = int(background.shape[0] * video_proportion_configs["height"]["colourmap"]) - (2 * border_configs["colourmap"]["width"])
-
-    start_colmap = time.time()
-    # create the colourmap image
-    border_colmap = create_colourmap((colourmap_height, colourmap_width, 3), mapper, 4)
-    colmap_creation.append(time.time() - start_colmap)
 
     # height of second image
     y_height_of_second_image = colourmap_height
@@ -1200,7 +1079,7 @@ def main():
     writer.release()
     print("The video was written to the file with the name '" + output_file_name + "'.")
 
-    print("colourmap = {}".format(sum(colmap_creation)))
+    print("colourmap = {}".format(sum(colmap_creation_time)))
     print("loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images = {}".format(
                                                                     sum(loop_through_sensor_value_columns_and_return_list_of_coloured_shape_images_list)))
     print("turn_all_the_different_images_into_one_image = {}".format(sum(turn_all_the_different_images_into_one_image_list)))

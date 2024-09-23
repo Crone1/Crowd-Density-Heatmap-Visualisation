@@ -2,7 +2,7 @@
 
 # describe the data
 data:
-  title: "Crowd Density"
+  title: "Crowd Density %"
   min_value: 0
   max_value: 100
 
@@ -36,6 +36,3 @@ default_area_details_folder: data/area_outlines
 default_events_file: data/event_details/level_5.txt
 # TODO: remove base_width
 default_base_width: 2048
-# TODO: remove below once automate colourmap creation
-default_colourmap_image: data/colourmap_image.png
-default_colourmap_name: plasma
