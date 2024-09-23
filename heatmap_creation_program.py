@@ -15,21 +15,24 @@ from image import Image
 from shape import Shape
 from colourmap import ColourMap
 
+from utils.input_utils import exit_if_false
 from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
 
 
+with open("configs/video_resolutions.yaml", "r") as resolution_file:
+    resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
+with open("configs/default_configs.yaml", "r") as default_config_file:
+    default_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)
+data_configs = default_configs["data"]
+video_configs = default_configs["video"]
+
+
 # read the heatmap customisation configuration variables
-with open("configs/heatmap_configs.yaml", "r") as config_file:
-    heatmap_configs = yaml.load(config_file, Loader=yaml.FullLoader)
-
-data_configs = heatmap_configs["data_specific"]
-video_configs = heatmap_configs["video_specific"]
-video_proportion_configs = heatmap_configs["video_proportions"]
-
+with open("configs/heatmap_configs.yaml", "r") as heatmap_config_file:
+    heatmap_configs = yaml.load(heatmap_config_file, Loader=yaml.FullLoader)
 border_configs = heatmap_configs["borders"]
 font_configs = heatmap_configs["fonts"]
-
 arrow_configs = heatmap_configs["arrows"]
 background_configs = heatmap_configs["background"]
 colourmap_configs = heatmap_configs["colourmap"]
@@ -865,13 +868,20 @@ def main():
     video_file_paths = inputs.video_file_paths
     area_details = inputs.area_details
     event_details = inputs.event_details
-    output_file_name = inputs.output_file_name
-    # TODO: remove base_width
-    base_width = inputs.base_width
+    video_output_file_path = inputs.video_output_file_path
     full_read_time = time.time() - start_read_time
 
-    # deal with inputs
-    csv_names = [csv[:-10] for csv in csv_file_paths]
+    # validate inputs
+    exit_if_false(
+        len(csv_file_paths) == len(area_details),
+        error="The number of areas you drew and the number of csvs you supplied do not match.",
+        criteria="to draw the same amount of areas on the image as csvs are in the supplied folder."
+    )
+    exit_if_false(
+        len(video_file_paths) == len(csv_file_paths),
+        error="The number of videos in the folder supplied does not match the number of csvs supplied.",
+        criteria="the number of videos in the supplied folder is the same as the number of csvs in the supplied folder."
+    )
 
     # resize background image
     video_width, video_height = resolution_configs[default_configs["video"]["resolution"]]
@@ -890,14 +900,6 @@ def main():
     cmap = ColourMap(colourmap_height, colourmap_width)
     cmap.create()
     colmap_creation_time = time.time() - start_colmap
-
-    if len(csv_file_paths) != len(area_details):
-        print("\nThe number of areas you drew and the number of csvs you supplied do not match. Please re-run the program drawing the same amount of areas on the image as csvs you supplied.")
-        exit(0)
-
-    if len(csv_file_paths) < len(video_file_paths):
-        print("\nThe number of videos in the folder supplied is greater than the number of csvs you supplied. Please re-run the program inputting the same amount or less videos than csvs you supply.")
-        exit(0)
 
     # turn the data into a dataframe
     list_of_dfs = create_a_list_of_dataframes(csv_file_paths)

@@ -1,6 +1,6 @@
 
-def exit_if_empty(value, error, criteria):
-    if not value:
+def exit_if_false(condition, error, criteria):
+    if not condition:
         print(f"\nInputError: {error}\nPlease re-run this program ensuring {criteria}")
         exit(0)
 

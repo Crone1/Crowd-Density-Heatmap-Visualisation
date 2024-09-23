@@ -25,14 +25,16 @@ video:
 
 # drawing defaults
 drawing:
-  output_file_name: "./area_details_file.json"
+  output_file_path: "./area_details_file.json"
+
+# heatmap defaults
+heatmap:
+  output_file_path: "./video.mp4"
+
 
 default_csv_folder: data/density_csvs
 default_video_folder: data/cctv_videos
 default_background_folder: data/floor_plans
 default_background_image: data/floor_plans/level_5.png
 default_output_file: video.mp4
-default_area_details_folder: data/area_outlines
 default_events_file: data/event_details/level_5.txt
-# TODO: remove base_width
-default_base_width: 2048
