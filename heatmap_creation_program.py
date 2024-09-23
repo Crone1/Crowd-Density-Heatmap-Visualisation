@@ -11,7 +11,7 @@ import sys
 import cv2
 
 from video_reader import VideoReaderQueue
-from heatmap_inputs import HeatmapInputs
+from heatmap_inputs import HeatmapInputHandler
 from shape import Shape
 from colourmap import ColourMap
 
@@ -906,26 +906,18 @@ def write_an_image_to_a_folder(output_folder_name, img):
 def main():
     start_time = time.time()
 
-    # read in the variables
-    input_handler = HeatmapInputs()
+    # get input variables
     start_read_time = time.time()
-    if len(sys.argv) > 1:
-        input_handler.get_variables_from_command_line()
-    else:
-        input_handler.get_variables_from_user()
-    full_read_time = time.time() - start_read_time
-
-    csv_file_paths = input_handler.csv_file_paths
-    video_file_paths = input_handler.video_file_paths
-    area_details = input_handler.area_details
-    event_details = input_handler.event_details
-    background_image_path = input_handler.background_image_path
-    output_file_name = input_handler.output_file_name
+    inputs = HeatmapInputHandler()
+    csv_file_paths = inputs.csv_file_paths
+    video_file_paths = inputs.video_file_paths
+    area_details = inputs.area_details
+    event_details = inputs.event_details
+    background_image_path = inputs.background_image_path
+    output_file_name = inputs.output_file_name
     # TODO: remove base_width
-    base_width = input_handler.base_width
-    # TODO: remove below once automate colourmap creation
-    colourmap_image_path = input_handler.colourmap_image_path
-    colourmap_name = input_handler.colourmap_name
+    base_width = inputs.base_width
+    full_read_time = time.time() - start_read_time
 
     # deal with inputs
     csv_names = [csv[:-10] for csv in csv_file_paths]

@@ -14,11 +14,13 @@ with open("configs/default_configs.yaml", "r") as config_file:
 default_output_file_name = default_configs["drawing"]["output_file_name"]
 
 
-class DrawingInputs:
+class DrawingInputHandler:
 
     def __init__(self):
-        self.background_path = ""
-        self.output_path = ""
+        if len(sys.argv) > 1:
+            self._get_variables_from_command_line()
+        else:
+            self._get_variables_from_user()
 
     @staticmethod
     def _process_background_image_path(image_path):
@@ -59,7 +61,7 @@ class DrawingInputs:
 
         return file_path
 
-    def get_variables_from_command_line(self):
+    def _get_variables_from_command_line(self):
 
         parser = argparse.ArgumentParser(description="The variables that make this programme work")
 
@@ -87,7 +89,7 @@ class DrawingInputs:
         self.background_path = self._process_background_image_path(args.background_image_path)
         self.output_path = self._process_output_file_path(args.output_file_path)
 
-    def get_variables_from_user(self):
+    def _get_variables_from_user(self):
 
         # background image
         background_path = input("Please enter the path to the background image: ")

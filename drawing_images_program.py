@@ -12,7 +12,8 @@ import yaml
 import cv2
 import sys
 
-from drawing_inputs import DrawingInputs
+from drawing_inputs import DrawingInputHandler
+
 from utils.maths_utils import get_distance
 
 
@@ -211,27 +212,7 @@ def draw_on_image(image):
     return area_details
 
 
-def handle_inputs():
-    """
-    Function Goal : call the functions that input the variables that are needed to make the program work and pass these variables to the main() function
-
-    return : tuple of strings - the path to the background image, the path to the output file
-    """
-
-    input_handler = DrawingInputs()
-
-    if len(sys.argv) > 1:
-        input_handler.get_variables_from_command_line()
-    else:
-        input_handler.get_variables_from_user()
-
-    return input_handler.background_path, input_handler.output_path
-
-
-def main():
-
-    # get inputs
-    background_image_path, output_path = handle_inputs()
+def main(background_image_path, output_path):
 
     # read image
     raw_img = cv2.imread(background_image_path)
@@ -256,4 +237,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    inputs = DrawingInputHandler()
+    main(inputs.background_path, inputs.output_path)

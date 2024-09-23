@@ -27,20 +27,15 @@ default_colourmap_image = default_configs["default_colourmap_image"]
 default_colourmap_name = default_configs["default_colourmap_name"]
 
 
-class HeatmapInputs:
+class HeatmapInputHandler:
 
     def __init__(self):
-        self.csv_file_paths = []
-        self.video_file_paths = []
-        self.area_details = {}
-        self.event_details = {}
-        self.background_image_path = default_background_image
-        self.output_file_name = default_output_file
         # TODO: remove base_width
         self.base_width = default_base_width
-        # TODO: remove below once automate colourmap creation
-        self.colourmap_image_path = default_colourmap_image
-        self.colourmap_name = default_colourmap_name
+        if len(sys.argv) > 1:
+            self._get_variables_from_command_line()
+        else:
+            self._get_variables_from_user()
 
     @staticmethod
     def _get_file_paths(folder_path, file_ext):
@@ -177,7 +172,7 @@ class HeatmapInputs:
 
         return dictionary_of_events
 
-    def get_variables_from_command_line(self):
+    def _get_variables_from_command_line(self):
         """
         Function Goal: This function is used to read all the variables in from the command line arguments
         """
@@ -262,7 +257,7 @@ class HeatmapInputs:
         if args.events_file_path != "none":
             self.event_details = self._get_event_details(args.events_file_path)
 
-    def get_variables_from_user(self):
+    def _get_variables_from_user(self):
 
         print("\nHello!")
 
