@@ -282,6 +282,56 @@ def create_event_text_box(second, events_dict, final_width, final_height, event_
     return bordered_text_box
 
 
+def create_timer(second, final_width, final_height):
+    """
+    Function Goal : Take an integer second and create an array corresponding to an image that is a particular width and height that contains the second fed in
+
+    second : integer - the second that the particular frame is produced at
+    final_width : integer - the width along the x-axis to make the array
+    final_height : integer - the height along the y-axis to make the array
+
+    return : a 3D numpy array of integers - this array corresponds to the image of a particular width and height that contains the integer second given
+    """
+
+    # define blank timer box
+    border_width = int(final_width * border_configs["timer"]["width_proportion"])
+    x_width = final_width - (2 * border_width)
+    y_height = final_height - (2 * border_width)
+    timer = np.ones((y_height, x_width, 3))
+
+    # get text for timer
+    text = '%05d' % second
+
+    # define text variables
+    timer_thickness = int(x_width * font_configs["timer"]["proportions"]["thickness"])
+    timer_size = x_width * font_configs["timer"]["proportions"]["size"]
+    timer_font = cv2_dict[font_configs["timer"]["type"]]
+
+    # define position to draw text
+    text_width, text_height = cv2.getTextSize(text, timer_font, timer_size, thickness=timer_thickness)[0]
+    start_y = int(y_height/2 + text_height/2)
+    start_x = int(x_width/2 - text_width/2)
+
+    # draw the text on the image
+    cv2.putText(
+        timer,
+        text,
+        (start_x, start_y),
+        timer_font,
+        timer_size,
+        color=font_configs["timer"]["colour"],
+        lineType=cv2_dict[font_configs["timer"]["line_type"]],
+        thickness=timer_thickness,
+    )
+
+    # put border on the image
+    bordered_timer = cv2.copyMakeBorder(
+        timer, top=border_width, bottom=border_width, left=border_width, right=border_width,
+        borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
+
+    return bordered_timer
+
+
 def fig_to_img(fig):
     """
     Function Goal : Turn a matplotlib figure into a BGRA image
@@ -611,56 +661,6 @@ def video_to_frames(read_videos, width, total_height):
         resized_frames.append(img)
 
     return resized_frames, height_of_frame
-
-
-def create_timer(second, final_width, final_height):
-    """
-    Function Goal : Take an integer second and create an array corresponding to an image that is a particular width and height that contains the second fed in
-
-    second : integer - the second that the particular frame is produced at
-    final_width : integer - the width along the x-axis to make the array
-    final_height : integer - the height along the y-axis to make the array
-
-    return : a 3D numpy array of integers - this array corresponds to the image of a particular width and height that contains the integer second given
-    """
-
-    # define blank timer box
-    border_width = int(final_width * border_configs["timer"]["width_proportion"])
-    x_width = final_width - (2 * border_width)
-    y_height = final_height - (2 * border_width)
-    timer = np.ones((y_height, x_width, 3))
-
-    # get text for timer
-    text = '%05d' % second
-
-    # define text variables
-    timer_thickness = int(x_width * font_configs["timer"]["proportions"]["thickness"])
-    timer_size = x_width * font_configs["timer"]["proportions"]["size"]
-    timer_font = cv2_dict[font_configs["timer"]["type"]]
-
-    # define position to draw text
-    text_width, text_height = cv2.getTextSize(text, timer_font, timer_size, thickness=timer_thickness)[0]
-    start_y = int(y_height/2 + text_height/2)
-    start_x = int(x_width/2 - text_width/2)
-
-    # draw the text on the image
-    cv2.putText(
-        timer,
-        text,
-        (start_x, start_y),
-        timer_font,
-        timer_size,
-        color=font_configs["timer"]["colour"],
-        lineType=cv2_dict[font_configs["timer"]["line_type"]],
-        thickness=timer_thickness,
-    )
-
-    # put border on the text
-    bordered_timer = cv2.copyMakeBorder(
-        timer, top=border_width, bottom=border_width, left=border_width, right=border_width,
-        borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
-
-    return bordered_timer
 
 
 def turn_all_the_different_images_into_one_image(main_heatmap_component, df_of_row,
