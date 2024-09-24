@@ -354,29 +354,44 @@ def fig_to_img(fig):
     return buf[:, :, ::-1][:, :, :3]/255
 
 
-def create_bar_plot_image(row, x_width, y_height, names, list_of_colours_of_bars):
+def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours):
     """
     Function Goal : take a row of sensor values and make a bar plot from these integers
 
-    row : DataFrame of integers - this is a single row from a DataFrame that contains the sensor values corresponding to a particular second in the larger DataFrame
-    x_width : integer - the width on the x-axis to make the bar plot
-    y_height : integer - the height on the y-axis to make the bar plot
+    sensor_values : pd.Series of integers - a row from a DataFrame containing sensor values used to colour the bar plot
+    final_width : integer - the width on the x-axis to make the bar plot
+    final_height : integer - the height on the y-axis to make the bar plot
     names : list of strings [str, str, ...etc.] - a list containing the names of the cameras to put on the bar plot
+    bar_colours: list of 3x1 numpy arrays of integers - these arrays represent the RGB colour for each bar
 
     return : an 3D numpy array of integers - an array corresponding to an image of the bar plot
     """
 
+    # create bar plot figure
     fig = plt.figure()
-    plt.subplot(title="The {} in the different areas.".format(data_configs["title"]), xlabel="Areas", ylim=(data_configs["min_value"], data_configs["max_value"]), ylabel=data_configs["title"])
-    plt.bar(names, list(row.iloc[0]), color=list_of_colours_of_bars)
+    plt.subplot(
+        title="The {} in the different areas.".format(data_configs["title"]),
+        xlabel="Areas",
+        ylim=(data_configs["min_value"], data_configs["max_value"]),
+        ylabel=data_configs["title"],
+    )
+    plt.bar(names, sensor_values, color=bar_colours)
 
+    # turn the figure to an image array
     img = fig_to_img(fig)
     plt.close()
 
+    # resize the image to the desired size
+    border_width = int(final_width * border_configs["bar_plot"]["proportions"]["width"])
+    x_width = final_width - (2 * border_width)
+    y_height = final_height - (2 * border_width)
     image = cv2.resize(img, (x_width, y_height))
 
-    bordered_image = cv2.copyMakeBorder(image, top=border_configs["bar_plot"]["width"], bottom=border_configs["bar_plot"]["width"], left=border_configs["bar_plot"]["width"], right=border_configs["bar_plot"]["width"],
-                                        borderType=cv2_dict[border_configs["bar_plot"]["type"]], value=border_configs["bar_plot"]["colour"])
+    # put border on the image
+    bordered_image = cv2.copyMakeBorder(
+        image, top=border_width, bottom=border_width, left=border_width, right=border_width,
+        borderType=cv2_dict[border_configs["bar_plot"]["type"]], value=border_configs["bar_plot"]["colour"]
+    )
 
     return bordered_image
 
@@ -709,7 +724,7 @@ def turn_all_the_different_images_into_one_image(main_heatmap_component, df_of_r
         start_bar = time.time()
 
         # create bar plot
-        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, height_of_frame, names, list_of_colours)
+        bar_plot_image = create_bar_plot(sensor_values, camera_video_width, height_of_frame, names, list_of_colours)
 
         bar_list.append(time.time() - start_bar)
 
@@ -747,7 +762,7 @@ def turn_all_the_different_images_into_one_image(main_heatmap_component, df_of_r
 
     else:
         # create bar plot
-        bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * border_configs["bar_plot"]["width"]), names, list_of_colours)
+        bar_plot_image = create_bar_plot(sensor_values, camera_video_width, main_heatmap_component.shape[0] - (2 * border_configs["bar_plot"]["width"]), names, list_of_colours)
 
         # merge the main heatmap image and the bar plot
         final_image = np.concatenate((bar_plot_image, main_heatmap_component), axis=1)
