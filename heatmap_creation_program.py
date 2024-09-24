@@ -40,10 +40,11 @@ event_box_configs = heatmap_configs["events_box"]
 
 
 # lists for timing everything
-turn_images_to_one_times = []
 define_heatmap_times = []
+define_event_box_times = []
+define_timer_times = []
+central_merge_times = []
 video_list = []
-shapes_list = []
 resize_list = []
 concat_outside_list = []
 bar_list = []
@@ -132,14 +133,17 @@ def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
     shape_objects : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     mapper : the heatmap mapper that maps a number to a colour
 
-    return : None
+    return : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     """
     default_colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3)) / 255
     outline_colour = heatmap_configs["borders"]["areas"]["colour"]
+    coloured_shape_objs = []
     for val, shape in zip(sensor_values, shape_objects):
         area_colour = default_colour if np.isnan(val) else mapper.to_rgba(val)[:3][::-1]
         shape.change_colour(fill_colour=area_colour, outline_colour=outline_colour)
         shape.create_merged_mask()
+        coloured_shape_objs.append(shape)
+    return coloured_shape_objs
 
 
 def join_shapes_to_background(shape_objects, background_array):
@@ -163,11 +167,11 @@ def join_shapes_to_background(shape_objects, background_array):
 
     # overlay the joined shapes onto the background image
     background_with_areas = cv2.addWeighted(
-        np.where(shapes_canvas != empty, shapes_canvas, background_array),
-        background_configs["transparency_alpha"],
-        background_array,
-        1 - background_configs["transparency_alpha"],
-        background_configs["transparency_gamma"],
+        src1=np.where(shapes_canvas != empty, shapes_canvas, background_array).astype(np.uint8),
+        alpha=background_configs["transparency_alpha"],
+        src2=background_array,
+        beta=1 - background_configs["transparency_alpha"],
+        gamma=background_configs["transparency_gamma"],
     )
 
     return background_with_areas
@@ -186,8 +190,8 @@ def label_areas_on_background(background_with_areas, list_of_area_centres, names
     """
     # define text variables
     label_font = cv2_dict[font_configs["areas"]["type"]]
-    label_size = font_configs["areas"]["size"]
-    label_thickness = font_configs["areas"]["thickness"]
+    label_size = background_with_areas.shape[1] * font_configs["areas"]["proportions"]["size"]
+    label_thickness = int(background_with_areas.shape[1] * font_configs["areas"]["proportions"]["thickness"])
 
     # draw the labels on each area
     for name, (centre_x, centre_y) in zip(names, list_of_area_centres):
@@ -213,68 +217,69 @@ def label_areas_on_background(background_with_areas, list_of_area_centres, names
     return background_with_areas
 
 
-def create_image_of_text_box_at_top(second, dictionary_of_events, x_width, y_height, event_duration_frame):
+def create_event_text_box(second, events_dict, final_width, final_height, event_duration):
     """
     Function Goal : Create the event text box for the top of the visualisation
 
     second : integer - the second that the particular frame is produced at
-    dictionary_of_events : dictionary of integer to string {integer : string, integer : string, ... etc.} - This is a dictionary of different integers representing particular
+    events_dict : dictionary of integer to string {integer : string, integer : string, ... etc.} - This is a dictionary of different integers representing particular
                                                                                                           seconds in the video mapped to an event that happend at that
                                                                                                           second. The string contains the text to be displayed in the text
                                                                                                           box at the top of the image.
-    x_width : integer - the width of the text box along the x-axis
-    y_height : integer - the height of the text box on the y-axis
-    event_duration_frame : integer - the number of frames either side of the event to display the text for that event
+    final_width : integer - the width of the text box along the x-axis
+    final_height : integer - the height of the text box on the y-axis
+    event_duration : integer - the number of frames either side of the event to display the text for that event
 
     return : 3D numpy array of integers - an array corresponding to the text box containing the text about the event
     """
 
-    img = np.ones((y_height, x_width, 3))
+    # define blank text box
+    border_width = int(final_width * border_configs["event_box"]["width_proportion"])
+    x_width = final_width - (2 * border_width)
+    y_height = final_height - (2 * border_width)
+    text_box = np.ones((y_height, x_width, 3))
 
-    second = int(second)
+    # get text for event box
+    potential_seconds = list(range(second - event_duration, second + 1))
+    found_seconds = [sec for sec in potential_seconds if sec in events_dict]
+    if found_seconds:
+        sec_to_display = max(found_seconds)
+        text = events_dict[sec_to_display]
 
-    seconds = list(range(second - event_duration_frame, second + event_duration_frame + 1))
+        # define text variables
+        event_thickness = int(x_width * font_configs["event_box"]["proportions"]["thickness"])
+        event_size = int(x_width * font_configs["event_box"]["proportions"]["size"])
+        event_font = cv2_dict[font_configs["event_box"]["type"]]
 
-    for sec in seconds:
-        if sec in dictionary_of_events:
+        # define position to draw text
+        text_width, text_height = cv2.getTextSize(text, event_font, event_size, thickness=event_thickness)[0]
+        while text_width > x_width:
+            print("WARNING: Event name associated with second '{}' is too long for text box. Will be truncated.".format(sec_to_display))
+            # TODO: Add newline instead of truncating
+            text = text[:len(text) // 2]
+            text_width, text_height = cv2.getTextSize(text, event_font, event_size, thickness=event_thickness)[0]
+        start_y_coord = int(y_height/2 + text_height/2)
+        start_x_coord = int(x_width/2 - text_width/2)
 
-            text = dictionary_of_events[sec]
+        # draw the text on the image
+        cv2.putText(
+            text_box,
+            text,
+            (start_x_coord, start_y_coord),
+            event_font,
+            event_size,
+            color=font_configs["event_box"]["colour"],
+            lineType=cv2_dict[font_configs["event_box"]["line_type"]],
+            thickness=event_thickness,
+        )
 
-            text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["thickness"])[0]
+    # put border on the text box
+    bordered_text_box = cv2.copyMakeBorder(
+        text_box, top=border_width, bottom=border_width, left=border_width, right=border_width,
+        borderType=cv2_dict[border_configs["event_box"]["type"]], value=border_configs["event_box"]["colour"],
+    )
 
-            if text_width > x_width:
-                print("The event name '" + text + "'' is too long for the text bar at the top, please input a shorter description of the event and re-run the program.")
-                # exit(0)
-
-                """
-                # this was written to try to sort the problem when the text of the event is too long for the bar
-                #print(text_width)
-                #print(x_width)
-                num_times_to_add_newline = int(text_width/x_width)
-                print(num_times_to_add_newline)
-                length_per_line = int(text_width/(num_times_to_add_newline + 1))
-                #print(length_per_line)
-                new_text = ""
-                for i in range(1, num_times_to_add_newline + 1):
-                    print(new_text)
-                    print(text[(length_per_line * (i-1)):(length_per_line * i)])
-                    new_text = new_text + text[(length_per_line * (i-1)):(length_per_line * i)] + '\n'
-                    print(new_text)
-
-                text_width, text_height = cv2.getTextSize(new_text, cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["thickness"])[0]
-                """
-
-            # this scale from bottom to top goes in descending order
-            start_y = int(y_height/2 + text_height/2)
-            start_x = int(x_width/2 - text_width/2)
-
-            cv2.putText(img, text, (start_x, start_y), cv2_dict[font_configs["event_box"]["type"]], font_configs["event_box"]["size"], font_configs["event_box"]["colour"], lineType=cv2_dict[font_configs["event_box"]["line_type"]],
-                        thickness=font_configs["event_box"]["thickness"])
-
-    bordered_image = cv2.copyMakeBorder(img, top=border_configs["event_box"]["width"], bottom=border_configs["event_box"]["width"], left=border_configs["event_box"]["width"],
-                                        right=border_configs["event_box"]["width"], borderType=cv2_dict[border_configs["event_box"]["type"]], value=border_configs["event_box"]["colour"])
-
-    return bordered_image
+    return bordered_text_box
 
 
 def fig_to_img(fig):
@@ -608,38 +613,59 @@ def video_to_frames(read_videos, width, total_height):
     return resized_frames, height_of_frame
 
 
-def create_image_of_second(second, x_width, y_height):
+def create_timer(second, final_width, final_height):
     """
     Function Goal : Take an integer second and create an array corresponding to an image that is a particular width and height that contains the second fed in
 
     second : integer - the second that the particular frame is produced at
-    x_width : integer - the width along the x-axis to make the array
-    y_height : integer - the height along the y-axis to make the array
+    final_width : integer - the width along the x-axis to make the array
+    final_height : integer - the height along the y-axis to make the array
 
     return : a 3D numpy array of integers - this array corresponds to the image of a particular width and height that contains the integer second given
     """
 
-    img = np.ones((y_height, x_width, 3))
+    # define blank timer box
+    border_width = int(final_width * border_configs["timer"]["width_proportion"])
+    x_width = final_width - (2 * border_width)
+    y_height = final_height - (2 * border_width)
+    timer = np.ones((y_height, x_width, 3))
 
+    # get text for timer
     text = '%05d' % second
 
-    text_width, text_height = cv2.getTextSize(text, cv2_dict[font_configs["timer"]["type"]], font_configs["timer"]["size"], font_configs["timer"]["thickness"])[0]
+    # define text variables
+    timer_thickness = int(x_width * font_configs["timer"]["proportions"]["thickness"])
+    timer_size = x_width * font_configs["timer"]["proportions"]["size"]
+    timer_font = cv2_dict[font_configs["timer"]["type"]]
 
+    # define position to draw text
+    text_width, text_height = cv2.getTextSize(text, timer_font, timer_size, thickness=timer_thickness)[0]
     start_y = int(y_height/2 + text_height/2)
     start_x = int(x_width/2 - text_width/2)
 
-    cv2.putText(img, text, (start_x, start_y), cv2_dict[font_configs["timer"]["type"]], font_configs["timer"]["size"], font_configs["timer"]["colour"],
-                lineType=cv2_dict[font_configs["timer"]["line_type"]], thickness=font_configs["timer"]["thickness"])
+    # draw the text on the image
+    cv2.putText(
+        timer,
+        text,
+        (start_x, start_y),
+        timer_font,
+        timer_size,
+        color=font_configs["timer"]["colour"],
+        lineType=cv2_dict[font_configs["timer"]["line_type"]],
+        thickness=timer_thickness,
+    )
 
-    bordered_image = cv2.copyMakeBorder(img, top=border_configs["timer"]["width"], bottom=border_configs["timer"]["width"], left=border_configs["timer"]["width"],
-                                        right=border_configs["timer"]["width"], borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
+    # put border on the text
+    bordered_timer = cv2.copyMakeBorder(
+        timer, top=border_width, bottom=border_width, left=border_width, right=border_width,
+        borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
 
-    return bordered_image
+    return bordered_timer
 
 
-def turn_all_the_different_images_into_one_image(shapes_nd_background_image, colourmap_image, df_of_row, timer_width, timer_height,
-                                                 width_of_left_and_right_images, dictionary_of_events, event_duration_frame, names, read_videos,
-                                                 num_videos_on_lhs, list_of_shapes_details, height_of_text_box, list_of_colours):
+def turn_all_the_different_images_into_one_image(main_heatmap_component, df_of_row,
+                                                 width_of_left_and_right_images, names, read_videos,
+                                                 num_videos_on_lhs, list_of_shapes_details, list_of_colours):
     """
     Function Goal : Get the images of the background, the shapes, the colourmap, the frame number, the camera footage videos and the bar plot image and merge these images
                     together to form one singular image
@@ -667,25 +693,6 @@ def turn_all_the_different_images_into_one_image(shapes_nd_background_image, col
     return : 3D numpy array of integers - an array corresponding to the image which is made up of all the different images to be featured in the video merged together
     """
 
-    start_other = time.time()
-
-    if dictionary_of_events:
-
-        # create an image for the text box at the top
-        text_box = create_image_of_text_box_at_top(df_of_row.Second.iloc[0], dictionary_of_events, shapes_nd_background_image.shape[1], height_of_text_box, event_duration_frame)
-
-        shapes_nd_background_image = np.concatenate((text_box, shapes_nd_background_image))
-
-    # create the image of the second
-    second_image = create_image_of_second(df_of_row.Second.iloc[0], timer_width, timer_height)
-
-    # merge the colourmap and the second images
-    colmap_nd_second = np.concatenate((colourmap_image, second_image), axis=1)
-
-    # merge the colormap and second image with the background image
-    main_heatmap_image = np.concatenate((shapes_nd_background_image, colmap_nd_second))
-
-    shapes_list.append(time.time() - start_other)
 
     start_video = time.time()
 
@@ -695,7 +702,7 @@ def turn_all_the_different_images_into_one_image(shapes_nd_background_image, col
         start_video_2_frames = time.time()
 
         # get a list of 1 frame from each video and reshape them
-        frames, height_of_frame = video_to_frames(read_videos, width_of_left_and_right_images, main_heatmap_image.shape[0])
+        frames, height_of_frame = video_to_frames(read_videos, width_of_left_and_right_images, main_heatmap_component.shape[0])
 
         video_2_frames_list.append(time.time() - start_video_2_frames)
 
@@ -716,15 +723,15 @@ def turn_all_the_different_images_into_one_image(shapes_nd_background_image, col
         start_resize = time.time()
 
         # resize the left and right images
-        lhs_img = cv2.resize(lhs_img, (lhs_img.shape[1], main_heatmap_image.shape[0]))
-        rhs_img = cv2.resize(rhs_img, (rhs_img.shape[1], main_heatmap_image.shape[0]))
+        lhs_img = cv2.resize(lhs_img, (lhs_img.shape[1], main_heatmap_component.shape[0]))
+        rhs_img = cv2.resize(rhs_img, (rhs_img.shape[1], main_heatmap_component.shape[0]))
 
         resize_list.append(time.time() - start_resize)
 
         start_concat = time.time()
 
         # merge the lhs images, the main heatmap image and the rhs images
-        fully_merged_image = np.concatenate((lhs_img, main_heatmap_image, rhs_img), axis=1)
+        fully_merged_image = np.concatenate((lhs_img, main_heatmap_component, rhs_img), axis=1)
 
         # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
         list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
@@ -743,7 +750,7 @@ def turn_all_the_different_images_into_one_image(shapes_nd_background_image, col
         bar_plot_image = create_bar_plot_image(df_of_row.iloc[:, 1:], width_of_left_and_right_images, main_heatmap_image.shape[0] - (2 * border_configs["bar_plot"]["width"]), names, list_of_colours)
 
         # merge the main heatmap image and the bar plot
-        final_image = np.concatenate((bar_plot_image, main_heatmap_image), axis=1)
+        final_image = np.concatenate((bar_plot_image, main_heatmap_component), axis=1)
 
     video_list.append(time.time() - start_video)
 
@@ -797,8 +804,6 @@ def main():
         isColor=True,
     )
 
-    event_duration_frame = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
-
     if not video_output_file_path:
         read_videos = []
         num_of_images_on_lhs = 0
@@ -813,15 +818,8 @@ def main():
             img = cv2.VideoCapture(vid)
             read_videos.append(img)
 
-    # get width & height of timer image
-    timer_width = int(base_width*video_proportion_configs["width"]["timer"]) - (2 * border_configs["timer"]["width"])
-    timer_height = colourmap_height
-
     # width of camera images beside heatmap
     width_of_left_and_right_images = int(base_width * video_proportion_configs["width"]["cameras"])
-
-    # height of event text box
-    height_of_text_box = int(video_proportion_configs["height"]["events_box"] * (border_colmap.shape[0] + background.shape[0]))
 
     # get the height of the video
     if event_details:
@@ -838,27 +836,46 @@ def main():
     # iterate through each row in the dataframe
     print("time before iteration through rows = {}".format(time.time() - start_time))
     new_start_time = time.time()
-    for i, row in joined_df.reset_index(drop=True).iterrows():
+    for i, (timestamp, sensor_vals) in enumerate(joined_df.iterrows()):
         print("Row {}, {:.3g}% Done".format(str(i), (100 * i/len(joined_df))))
-
-        df_row = pd.DataFrame(row).T
 
         # define central heatmap image
         define_heatmap_start_time = time.time()
-        add_colour_to_area_masks_and_merge(df_row.drop(columns=["Second"]), shape_objects, cmap.mapper)
-        background_with_areas = join_shapes_to_background(shape_objects, background_image.image)
-        shape_centres = [shape.centre for shape in shape_objects]
+        coloured_shape_objects = add_colour_to_area_masks_and_merge(sensor_vals, shape_objects, cmap.mapper)
+        background_with_areas = join_shapes_to_background(coloured_shape_objects, background_image.image)
+        shape_centres = [shape.centre for shape in coloured_shape_objects]
         csv_names = [os.path.basename(path)[:-3] for path in csv_file_paths]
-        labeled_background_with_areas = label_areas_on_background(background_with_areas, shape_centres, csv_names)
+        heatmap = label_areas_on_background(background_with_areas, shape_centres, csv_names)
         define_heatmap_times.append(time.time() - define_heatmap_start_time)
 
-        # merge these images with the image of the colourmap and of the second
-        merged_image = turn_all_the_different_images_into_one_image(list_of_coloured_shape_images, background, border_colmap, df_row, timer_width,
-                                                                    timer_height, width_of_left_and_right_images, event_details,
-                                                                    event_duration_frame, csv_names, shape_objects, read_videos, num_of_images_on_lhs,
-                                                                    height_of_text_box, list_of_colours)
+        # define event text box
+        define_event_box_start_time = time.time()
+        event_box_height = int(video_height * video_configs["proportions"]["height"]["events_box"])
+        event_duration = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
+        event_box = create_event_text_box(int(timestamp.timestamp()), event_details, heatmap.shape[1], event_box_height, event_duration)
+        define_event_box_times.append(time.time() - define_event_box_start_time)
 
-        turn_all_the_different_images_into_one_image_list.append(time.time() - start_turn_all_the_different_images_into_one_image)
+        # define timer
+        define_timer_start_time = time.time()
+        timer_width = int(video_width * video_configs["proportions"]["width"]["timer"])
+        timer = create_timer(int(timestamp.timestamp()), timer_width, colourmap_height)
+        define_timer_times.append(time.time() - define_timer_start_time)
+
+        # merge central heatmap components
+        central_merge_start_time = time.time()
+        top_component = np.concatenate((event_box, heatmap), axis=0)
+        # merge colourmap and timer
+        bottom_component = np.concatenate((cmap.image, timer), axis=1)
+        # merge colormap & timer with the heatmap & event box
+        main_heatmap_component = np.concatenate((top_component, bottom_component), axis=0)
+        central_merge_times.append(time.time() - central_merge_start_time)
+
+        # merge these images with the image of the colourmap and of the second
+        start_turn_images_to_one = time.time()
+        merged_image = turn_all_the_different_images_into_one_image(
+            main_heatmap_component, df_row, cctv_width, csv_names, cctv_video_list, num_videos_on_lhs,
+        )
+        turn_images_to_one_times.append(time.time() - start_turn_images_to_one)
 
         # write the images to the video
         final_frame = Image.from_array(merged_image)
@@ -870,12 +887,16 @@ def main():
     writer.release()
     print("The video was written to the file with the name '" + video_output_file_path + "'.")
 
+    print("---- BEFORE LOOPING ----")
     print("colourmap = {}".format(colmap_creation_time))
     print("joined_df = {}".format(joined_df_time))
     print("read_videos_time = {}".format(read_videos_time))
+    print("---- IN LOOP ----")
     print("define heatmap = {}".format(sum(define_heatmap_times)))
+    print("define event box = {}".format(sum(define_event_box_times)))
+    print("define timer = {}".format(sum(define_timer_times)))
+    print("merge central heatmap = {}".format(sum(central_merge_times)))
 
-    print("other stuff = {}".format(sum(shapes_list)))
     print("video stuff = {}".format(sum(video_list)))
     print("video_2_frames = {}".format(sum(video_2_frames_list)))
     print("read in videos = {}".format(sum(read_in_list)))

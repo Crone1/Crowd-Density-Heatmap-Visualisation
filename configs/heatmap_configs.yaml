@@ -2,52 +2,54 @@
 
 # configure components
 borders:
-  background:
-    colour: [0, 0, 0]
-    type: BORDER_CONSTANT
-    width: 1
+  areas:
+    colour: [1, 1, 1]  # anything except [0, 0, 0]
   bar_plot:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
-    width: 1
+    width_proportion: 0.05
   cameras:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
-    width: 1
+    width_proportion: 0.05
   event_box:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
-    width: 1
+    width_proportion: 0.05
   timer:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
-    width: 1
+    width_proportion: 0.05
 
 fonts:
   areas:
     colour: [0, 0, 0]
-    size: 1
-    thickness: 1
     type: FONT_HERSHEY_SIMPLEX
     line_type: LINE_AA
+    proportions:
+      size: 0.05
+      thickness: 0.05
   cameras:  # text on video if video ends - "No Data"
     colour: [1, 1, 1]
-    size: 3
-    thickness: 3
     type: FONT_HERSHEY_SIMPLEX
     line_type: LINE_AA
+    proportions:
+      size: 0.15
+      thickness: 0.15
   event_box:
     colour: [0, 0, 0]
-    size: 2
-    thickness: 1
     type: FONT_HERSHEY_SIMPLEX
     line_type: LINE_AA
+    proportions:
+      size: 0.1
+      thickness: 0.05
   timer:
     colour: [0, 0, 0]
-    size: 1
-    thickness: 1
     type: FONT_HERSHEY_PLAIN
     line_type: LINE_AA
+    proportions:
+      size: 0.05
+      thickness: 0.05
 
 
 # configurate arrows from cameras to areas
