@@ -33,11 +33,3 @@ drawing:
 # heatmap defaults
 heatmap:
   output_file_path: "./video.mp4"
-
-
-default_csv_folder: data/density_csvs
-default_video_folder: data/cctv_videos
-default_background_folder: data/floor_plans
-default_background_image: data/floor_plans/level_5.png
-default_output_file: video.mp4
-default_events_file: data/event_details/level_5.txt
