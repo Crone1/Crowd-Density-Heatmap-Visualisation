@@ -8,11 +8,9 @@ import yaml
 import time
 import cv2
 from tqdm.auto import tqdm
-import os
 
 # import helper classes
 from components.colourmap import ColourMap
-from data_models.image import Image
 from data_models.shape import Shape
 from input_handlers.heatmap_inputs import HeatmapInputHandler
 from input_output.video_reader import VideoReader
@@ -579,23 +577,6 @@ def write_to_video(image, writer, expected_shape):
     writer.write(image)
 
 
-def write_to_folder(image, folder_name, file_name):
-    """
-    Function Goal : write the image to a folder
-
-    image : 3D np.array - array representing the RGB values of the image we want to write
-    folder_name : string - the name of the folder where the image file will be written
-    file_name : string - the name of the file in the folder to write the image to
-
-    return : None
-    """
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-    if not os.path.isdir(folder_name):
-        raise ValueError("The supplied 'folder_name' is not a directory.")
-    cv2.imwrite(os.path.join(folder_name, file_name), image * 255)
-
-
 def main():
 
     # get input variables
@@ -712,8 +693,7 @@ def main():
             draw_arrows_times.append(time.time() - draw_arrows_start_time)
 
             # write the images to the video
-            # write_to_folder(all_components, "./vid_images", f"{str(int(timestamp.timestamp()))}.png")
-            write_to_video(all_components, writer, expected_shape=(video_height, video_width, 3))
+            write_to_video(final_image, writer, expected_shape=(video_height, video_width, 3))
 
             loop_times.append(time.time() - new_start_time)
             new_start_time = time.time()
