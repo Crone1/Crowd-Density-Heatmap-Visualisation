@@ -43,15 +43,29 @@ class Image:
         self.image = cv2.resize(self.image, (desired_width, desired_height))
         self.shape = self.image.shape
 
-    def write_to_video(self, writer):
+    def write_to_video(self, writer, expected_shape):
         """
         Function Goal : write the image to a video so that it is one frame of the video
 
-        writer : all the details to do with writing the images to the video
+        writer : writer object - object that allows writing to a specific video
+        expected_shape : tuple of integers (int, int, int) - expected image shape before writing
 
         return : None
         """
-        writer.write(np.uint8(self.image * 255))
+        # sort the shape
+        if self.shape != expected_shape:
+            # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
+            height, width, depth = self.shape
+            exp_height, exp_width, exp_depth = expected_shape
+            if ((exp_height - height) <= 1) or ((exp_width - width) <= 1):
+                self.resize(exp_width, exp_height)
+                assert self.shape == expected_shape
+            else:
+                raise ValueError(f"Cannot write frame with shape '{self.shape}'. Expecting shape '{expected_shape}'")
+        # sort the type of the image
+        image = self.image if self.image.dtype == np.uint8 else np.uint8(self.image * 255)
+        # write the image
+        writer.write(image)
 
     def write_to_folder(self, folder_name, file_name):
         """

@@ -778,7 +778,6 @@ def main():
 
             # merge central heatmap components
             central_merge_start_time = time.time()
-            # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
             top_component = np.concatenate((event_box, heatmap), axis=0)
             bottom_component = np.concatenate((cmap.image, timer), axis=1)
             main_heatmap_component = np.concatenate((top_component, bottom_component), axis=0)
@@ -820,7 +819,7 @@ def main():
             # write the images to the video
             final_frame = Image.from_array(all_components)
             final_frame.write_to_folder("./vid_images", f"{str(int(timestamp.timestamp()))}.png")
-            final_frame.write_to_video(writer)
+            final_frame.write_to_video(writer, expected_shape=(video_height, video_width, 3))
 
             loop_times.append(time.time() - new_start_time)
             new_start_time = time.time()
