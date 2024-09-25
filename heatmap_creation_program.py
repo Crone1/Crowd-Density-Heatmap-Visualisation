@@ -8,6 +8,7 @@ import yaml
 import time
 import cv2
 from tqdm.auto import tqdm
+import os
 
 # import helper classes
 from components.colourmap import ColourMap
@@ -698,6 +699,49 @@ def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second
     return list_of_camera_image_midpoints
 
 
+def write_to_video(image, writer, expected_shape):
+    """
+    Function Goal : write the image to a video so that it is one frame of the video
+
+    image : 3D np.array - array representing the RGB values of the image we want to write
+    writer : writer object - object that allows writing to a specific video
+    expected_shape : tuple of integers (int, int, int) - expected image shape before writing
+
+    return : None
+    """
+    # sort the shape
+    if image.shape != expected_shape:
+        # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
+        height, width, depth = image.shape
+        exp_height, exp_width, exp_depth = expected_shape
+        if ((exp_height - height) <= 1) or ((exp_width - width) <= 1):
+            image = cv2.resize(image, (exp_width, exp_height))
+            assert image.shape == expected_shape
+        else:
+            raise ValueError(f"Cannot write frame with shape '{image.shape}'. Expecting shape '{expected_shape}'")
+    # sort the type of the image
+    image = image if image.dtype == np.uint8 else np.uint8(image * 255)
+    # write the image
+    writer.write(image)
+
+
+def write_to_folder(image, folder_name, file_name):
+    """
+    Function Goal : write the image to a folder
+
+    image : 3D np.array - array representing the RGB values of the image we want to write
+    folder_name : string - the name of the folder where the image file will be written
+    file_name : string - the name of the file in the folder to write the image to
+
+    return : None
+    """
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    if not os.path.isdir(folder_name):
+        raise ValueError("The supplied 'folder_name' is not a directory.")
+    cv2.imwrite(os.path.join(folder_name, file_name), image * 255)
+
+
 def main():
 
     # get input variables
@@ -817,9 +861,8 @@ def main():
             """
 
             # write the images to the video
-            final_frame = Image.from_array(all_components)
-            final_frame.write_to_folder("./vid_images", f"{str(int(timestamp.timestamp()))}.png")
-            final_frame.write_to_video(writer, expected_shape=(video_height, video_width, 3))
+            # write_to_folder(all_components, "./vid_images", f"{str(int(timestamp.timestamp()))}.png")
+            write_to_video(all_components, writer, expected_shape=(video_height, video_width, 3))
 
             loop_times.append(time.time() - new_start_time)
             new_start_time = time.time()

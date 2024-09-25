@@ -1,7 +1,5 @@
 
-import numpy as np
 import cv2
-import os
 
 
 class Image:
@@ -42,41 +40,3 @@ class Image:
         # scale to correct resolution
         self.image = cv2.resize(self.image, (desired_width, desired_height))
         self.shape = self.image.shape
-
-    def write_to_video(self, writer, expected_shape):
-        """
-        Function Goal : write the image to a video so that it is one frame of the video
-
-        writer : writer object - object that allows writing to a specific video
-        expected_shape : tuple of integers (int, int, int) - expected image shape before writing
-
-        return : None
-        """
-        # sort the shape
-        if self.shape != expected_shape:
-            # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
-            height, width, depth = self.shape
-            exp_height, exp_width, exp_depth = expected_shape
-            if ((exp_height - height) <= 1) or ((exp_width - width) <= 1):
-                self.resize(exp_width, exp_height)
-                assert self.shape == expected_shape
-            else:
-                raise ValueError(f"Cannot write frame with shape '{self.shape}'. Expecting shape '{expected_shape}'")
-        # sort the type of the image
-        image = self.image if self.image.dtype == np.uint8 else np.uint8(self.image * 255)
-        # write the image
-        writer.write(image)
-
-    def write_to_folder(self, folder_name, file_name):
-        """
-        Function Goal : write the image to a folder
-
-        folder_name : string - the name of the folder that you want to write the images to
-
-        return : None
-        """
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        if not os.path.isdir(folder_name):
-            raise ValueError("The supplied 'folder_name' is not a directory.")
-        cv2.imwrite(os.path.join(folder_name, file_name), self.image * 255)
