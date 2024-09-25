@@ -2,6 +2,8 @@
 import numpy as np
 import cv2
 
+from utils.maths_utils import generate_points_on_shape_boundary, get_closest_point_between_points, get_distance_to_point, get_equation_of_line, get_ratio_interval_point
+
 
 class Shape:
     def __init__(self, shape_type):
@@ -29,6 +31,12 @@ class Shape:
         raise NotImplementedError("Subclasses must implement this method")
 
     def create_masks(self, img_size, filled_val, outline_val, outline_thickness):
+        raise NotImplementedError("Subclasses must implement this method")
+
+    def adjust(self, x_offset, y_offset):
+        raise NotImplementedError("Subclasses must implement this method")
+
+    def get_closest_point(self, point):
         raise NotImplementedError("Subclasses must implement this method")
 
     def change_colour(self, fill_colour, outline_colour):
@@ -72,6 +80,19 @@ class Rectangle(Shape):
         self.outline_mask = outline_canvas
         self.outline_colour = outline_colour
 
+    def adjust(self, x_offset, y_offset):
+        """Returns a new rectangle with points adjusted by an x and y offset."""
+        adjusted_start = (self.start_point[0] + x_offset, self.start_point[1] + y_offset)
+        adjusted_end = (self.end_point[0] + x_offset, self.end_point[1] + y_offset)
+        return Rectangle(adjusted_start, adjusted_end)
+
+    def get_closest_point(self, point):
+        start_x_end_y = (self.start_point[0], self.end_point[1])
+        end_x_start_y = (self.end_point[0], self.start_point[1])
+        corners = [self.start_point, start_x_end_y, self.end_point, end_x_start_y]
+        boundary_points = generate_points_on_shape_boundary(corners)
+        return get_closest_point_between_points(boundary_points, point, self.centre)
+
 
 class Circle(Shape):
     def __init__(self, centre, radius):
@@ -93,6 +114,15 @@ class Circle(Shape):
         cv2.circle(outline_canvas, self.centre, self.radius, color=outline_colour, thickness=outline_thickness)
         self.outline_mask = outline_canvas
         self.outline_colour = outline_colour
+
+    def adjust(self, x_offset, y_offset):
+        """Returns a new circle with its centre adjusted by an x and y offset."""
+        adjusted_centre = (self.centre[0] + x_offset, self.centre[1] + y_offset)
+        return Circle(adjusted_centre, self.radius)
+
+    def get_closest_point(self, point):
+        distance = get_distance_to_point(self.centre, point)
+        return get_ratio_interval_point(self.centre, point, self.radius, distance - self.radius)
 
 
 class Polygon(Shape):
@@ -118,3 +148,12 @@ class Polygon(Shape):
         cv2.polylines(outline_canvas, pts=np.int32([self.points]), isClosed=True, color=outline_colour, thickness=outline_thickness)
         self.outline_mask = outline_canvas
         self.outline_colour = outline_colour
+
+    def adjust(self, x_offset, y_offset):
+        """Returns a new polygon with points adjusted by an x and y offset."""
+        adjusted_points = [(x + x_offset, y + y_offset) for x, y in self.points]
+        return Polygon(adjusted_points)
+
+    def get_closest_point(self, point):
+        all_boundary_points = generate_points_on_shape_boundary(self.points)
+        return get_closest_point_between_points(all_boundary_points, point, self.centre)

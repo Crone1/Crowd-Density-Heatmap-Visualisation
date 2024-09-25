@@ -477,119 +477,80 @@ def get_lhs_and_rhs_frames(video_frames, final_width, total_height):
     return bordered_lhs_frames, bordered_rhs_frames, bordered_lhs_frames[0].shape[0]
 
 
-def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_camera_image_midpoints, width_to_move, height_to_move):
+def draw_arrows_from_cameras_to_shapes(image, shape_objects, camera_image_midpoints):
     """
     Function Goal : Take an array corresponding to the image, change some values so that when it is turned to an image, arrows are drawn between the shapes on the image
                     and the boxes containing the camera footage
 
     image : 3D numpy array of integers - the array that corresponds to one frame of the video
-    list_of_shapes_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
-    list_of_camera_image_midpoints : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
+    shape_objects : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
+    camera_image_midpoints : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
                                      containing camera footage
-    width_to_move : integer - the value to add to the x value of the points on the shapes to account for the fact I added in the camera footage on the LHS and RHS
-    height_to_move : integer - the value to add to the y value of the points on the shapes to account for the fact I added in the colourmap and text box on the
-                               top and bottom of the image
 
     return : 3D numpy array of integers - the array that corresponds to one frame of the video that includes the arrows draw on the image
     """
 
-    for i in range(len(list_of_camera_image_midpoints)):
-        shape_details = list_of_shapes_details[i]
+    for shape, cam_midpoint in zip(shape_objects, camera_image_midpoints):
 
-        if shape_details["type"] == "rectangle":
-            start = tuple(shape_details["start"])
-            end = tuple(shape_details["end"])
+        # get the closest point on the shape
+        closest = shape.get_closest_point(cam_midpoint)
 
-            moved_start = (start[0] + width_to_move, start[1] + height_to_move)
-            moved_end = (end[0] + width_to_move, end[1] + height_to_move)
+        # draw arrow line from area to the camera midpoint
+        _, width, _ = image.shape
+        arrow_thickness = int(width * arrow_configs["proportions"]["thickness"])
+        arrow_type = arrow_configs["line_type"]
+        arrow_colour = arrow_configs["colour"]
+        cv2.line(img=image, pt1=cam_midpoint, pt2=closest, color=arrow_colour, thickness=arrow_thickness, lineType=arrow_type)
 
-            moved_centre = ((moved_start[0] + moved_end[0])/2, (moved_start[1] + moved_end[1])/2)
+        # define arrow-head angle
+        dist_between_point = (cam_midpoint[0] - closest[0], cam_midpoint[1] - closest[1])
+        _, pi = convert_cartesian_to_polar(dist_between_point)
+        angles = [pi - arrow_configs["head_angle"], pi + arrow_configs["head_angle"]]
 
-            start_x_nd_end_y = (moved_start[0], moved_end[1])
-            end_x_nd_start_y = (moved_end[0], moved_start[1])
-
-            moved_corners = [moved_start, start_x_nd_end_y, moved_end, end_x_nd_start_y]
-
-            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_centre)
-
-        elif shape_details["type"] == "poly":
-            corners = shape_details["points"]
-
-            moved_corners = []
-            for corner in corners:
-                moved_corners.append((corner[0] + width_to_move, corner[1] + height_to_move))
-
-            moved_centre = np.mean(pd.DataFrame(moved_corners), axis=0).astype(int)
-
-            closest = get_closest_point(moved_corners, list_of_camera_image_midpoints[i], moved_centre)
-
-        elif shape_details["type"] == "circle":
-            centre = tuple(shape_details["centre"])
-            radius = shape_details["radius"]
-
-            moved_centre = (centre[0] + width_to_move, centre[1] + height_to_move)
-
-            distance = get_distance(moved_centre, list_of_camera_image_midpoints[i])
-
-            closest = get_ratio_interval_point(moved_centre, list_of_camera_image_midpoints[i], radius, distance-radius)
-
-        else:
-            raise ValueError(f"Encountered unexpected shape type: {shape_details["type"]}.")
-
-        # draw line for the arrow between the edge of the area to the camera footage frame
-        cv2.line(image, list_of_camera_image_midpoints[i], closest, arrow_configs["line_colour"], thickness=arrow_configs["line_thickness"],
-                 lineType=arrow_configs["line_type"])
-
-        # calculate the angle that the arrow head needs to be
-        point_relative_to_point_on_shape = (list_of_camera_image_midpoints[i][0] - closest[0], list_of_camera_image_midpoints[i][1] - closest[1])
-
-        rho, pi = convert_cartesian_to_polar(point_relative_to_point_on_shape)
-
-        new_angles = [pi - arrow_configs["head_angle"], pi + arrow_configs["head_angle"]]
-
-        # draw the lines for the arrow head
-        for angle in new_angles:
-            x, y = convert_polar_to_cartesian(arrow_configs["head_length"], angle)
-
-            cv2.line(image, (closest[0] + x, closest[1] + y), closest, arrow_configs["line_colour"],
-                     thickness=arrow_configs["line_thickness"], lineType=arrow_configs["line_type"])
+        # draw the arrow-head lines
+        head_length = width * arrow_configs["proportions"]["head_length"]
+        for angle in angles:
+            x, y = convert_polar_to_cartesian(head_length, angle)
+            cv2.line(
+                img=image,
+                pt1=(closest[0] + x, closest[1] + y),
+                pt2=closest,
+                color=arrow_colour,
+                thickness=arrow_thickness,
+                lineType=arrow_type,
+            )
 
     return image
 
 
-def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second, num_videos_on_lhs, num_videos_on_rhs, total_height):
+def get_camera_image_midpoints(first_x, second_x, num_on_lhs, num_on_rhs, total_height):
     """
-    Function goal : create a list of points which correspond to the coordinates of the midpoints of the edges of the boxes containing camera footage
+    Function goal : create a list of points corresponding to the midpoints of the LHS and RHS camera images
 
-    first_x : integer - the distance along the x-axis between the most left point and the edge of the first set of camera footage videos
-    distance_between_first_nd_second : integer - the distance along the x-axis between the edge of the first set of camera footage videos and the start of the second
-                                                 set of camera footage video
-    num_videos_on_rhs : integer - the number of camera footage videos on the right hand side of the middle heatmap image
-    total_height : integer - the total height along the y-axis of the whole video
+    first_x : integer - the x-axis value for the midpoints of the LHS camera image
+    second_x : integer - the x-axis value for the midpoints of the RHS camera image
+    num_on_lhs : integer - the number of points to get corresponding to the LHS camera images
+    num_on_rhs : integer - the number of points to get corresponding to the RHS camera images
+    total_height : integer - the total height along the y-axis of all camera images stacked on top of each other
 
-    return : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points. These points are the coordinates of the midpoints of the edges of the boxes
-                                                                            containing camera footage
+    return : list of tuples of integers [(int, int), (int, int), ...etc.] - list of camera image mid-points
     """
+    # define empty list
+    camera_image_midpoints = []
 
-    left_token_height = int(total_height/(2 * (num_videos_on_lhs + 1)))
-    right_token_height = int(total_height/(2 * num_videos_on_rhs))
+    # define point for LHS
+    if num_on_lhs > 0:
+        lhs_interval = int(total_height / (num_on_lhs + 1))
+        for i in range(num_on_lhs):
+            camera_image_midpoints.append((first_x, int((lhs_interval / 2) + (i * lhs_interval))))
 
-    list_of_camera_image_midpoints = []
-    for i in range(num_videos_on_lhs + num_videos_on_rhs):
-        if i < num_videos_on_lhs:
-            # videos on the left hand side
-            x = first_x
-            y = ((2 * i) + 1) * left_token_height
+    # define points for RHS
+    if num_on_rhs > 0:
+        rhs_interval = int(total_height / num_on_rhs)
+        for i in range(num_on_rhs):
+            camera_image_midpoints.append((second_x, int((rhs_interval / 2) + (i * rhs_interval))))
 
-        else:
-            #  videos on the right hand side
-            x = first_x + distance_between_first_nd_second
-            y = ((2 * (i - num_videos_on_lhs)) + 1) * right_token_height
-
-        # add the point to a list
-        list_of_camera_image_midpoints.append((x, y))
-
-    return list_of_camera_image_midpoints
+    return camera_image_midpoints
 
 
 def write_to_video(image, writer, expected_shape):
@@ -740,18 +701,15 @@ def main():
             all_components = np.concatenate((lhs_component, main_heatmap_component, rhs_component), axis=1)
             side_merge_times.append(time.time() - side_merge_start_time)
 
-            """
             # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
             draw_arrows_start_time = time.time()
-            list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
-                camera_video_width, shapes_nd_background_image.shape[1],
-                num_videos_on_lhs, n_frames - num_videos_on_lhs, fully_merged_image.shape[0]
+            camera_midpoints = get_camera_image_midpoints(
+                camera_video_width, (camera_video_width + main_heatmap_component.shape[1]),
+                len(lhs_cam_frames), len(rhs_cam_frames), lhs_component.shape[0]
             )
-            final_image = draw_arrows_from_cameras_to_shapes(
-                fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, camera_video_width, height_of_text_box
-            )
+            adjusted_shapes = [shape.adjust(x_offset=camera_video_width, y_offset=event_box_height) for shape in coloured_shape_objects]
+            final_image = draw_arrows_from_cameras_to_shapes(all_components, adjusted_shapes, camera_midpoints)
             draw_arrows_times.append(time.time() - draw_arrows_start_time)
-            """
 
             # write the images to the video
             # write_to_folder(all_components, "./vid_images", f"{str(int(timestamp.timestamp()))}.png")

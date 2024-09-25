@@ -50,12 +50,12 @@ fonts:
 
 # configurate arrows from cameras to areas
 arrows:
+  colour: [0, 0, 0]
   line_type: 8
-  line_thickness: 2
-  line_colour: [0, 0, 0]
-  points_on_line: 500
   head_angle: 0.78
-  head_length: 15
+  proportions:
+    thickness: 0.0015
+    head_length: 0.01
 
 
 # configure background areas
