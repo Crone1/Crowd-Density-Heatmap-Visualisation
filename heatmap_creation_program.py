@@ -356,6 +356,7 @@ def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours
     plt.bar(names, sensor_values, color=bar_colours)
 
     # turn the figure to an image array
+    # TODO: investigate faster way to construct bar plot component
     img = fig_to_img(fig)
     plt.close()
 
@@ -386,6 +387,7 @@ def read_camera_frames(video_objects, second):
     frames = []
     for video_obj in video_objects:
         try:
+            # TODO: investigate faster way to read frames
             frame = uint_to_float(video_obj.get_frame(video_obj.frame_rate * second))
         except ValueError:
             frame = np.zeros((1, 1, 3))

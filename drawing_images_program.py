@@ -201,6 +201,7 @@ def main(background, output_path):
     # draw areas
     print_how_to_use_image_drawer()
     area_details = draw_on_image(background.image)
+    # TODO: add something to the file to tell what background shape these coordinates were drawn on - allow scaling
 
     # output to file
     with open(output_path, 'w') as file_of_area_details:

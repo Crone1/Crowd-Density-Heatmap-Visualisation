@@ -130,6 +130,7 @@ class HeatmapInputHandler:
         )
         # check json file is not empty
         exit_if_false(_load_json(file_path), error="The file path entered points to an empty json file.", criteria=universal_criteria)
+        # TODO: check coordinates align with the expected coordinates in the output video
 
         # extract area details from file
         return _load_json(file_path)
