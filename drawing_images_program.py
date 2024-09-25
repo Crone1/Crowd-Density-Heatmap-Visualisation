@@ -213,4 +213,4 @@ def main(background, output_path):
 
 if __name__ == '__main__':
     inputs = DrawingInputHandler()
-    main(inputs.background, inputs.output_path)
+    main(inputs.background, inputs.drawing_output_file_path)

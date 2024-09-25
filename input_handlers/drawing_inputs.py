@@ -92,7 +92,7 @@ class DrawingInputHandler:
 
         # process data
         self.background = self._process_background_image_path(args.background_image_path)
-        self.output_path = self._process_output_file_path(args.output_file_path)
+        self.drawing_output_file_path = self._process_output_file_path(args.output_file_path)
 
     def _get_variables_from_user(self):
 
