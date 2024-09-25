@@ -13,7 +13,7 @@ import cv2
 
 from input_handlers.drawing_inputs import DrawingInputHandler
 
-from utils.maths_utils import get_distance
+from utils.maths_utils import get_distance_to_point
 
 
 # read the drawing customisation configuration variables
@@ -128,7 +128,7 @@ def mouse_callbacks(event, x, y):
 
             elif drawing_mode == "circle":
                 cv2.circle(tmp_img, (start_x, start_y), int(
-                    get_distance((start_x, start_y), (x, y))), drawing_configs["drawing_colour"], line_thickness)
+                    get_distance_to_point((start_x, start_y), (x, y))), drawing_configs["drawing_colour"], line_thickness)
 
             elif drawing_mode == "polygon":
                 cv2.polylines(tmp_img, np.int32(
@@ -148,7 +148,7 @@ def mouse_callbacks(event, x, y):
             })
 
         elif drawing_mode == "circle":
-            radius = int(get_distance((start_x, start_y), (x, y)))
+            radius = int(get_distance_to_point((start_x, start_y), (x, y)))
             cv2.circle(tmp_img, (start_x, start_y), radius, drawing_configs["drawing_colour"], line_thickness)
             area_details.append({
                 "type": "circle",

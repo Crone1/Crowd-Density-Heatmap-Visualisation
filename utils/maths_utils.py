@@ -31,14 +31,14 @@ def get_equation_of_line(p1, p2):
     return coefficients, constant
 
 
-def get_distance(p1, p2):
+def get_distance_to_point(p1, p2):
     """
     Function Goal : get the distance between 2 points
 
     p1 : tuple of integers (int, int) - a point
     p2 : tuple of integers (int, int) - a point
 
-    return : integer - th distance between p1 and p2
+    return : float - the distance between p1 and p2
     """
     return np.hypot(p1[0] - p2[0], p1[1] - p2[1])
 
