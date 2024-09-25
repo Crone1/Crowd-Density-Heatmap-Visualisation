@@ -27,6 +27,11 @@ class VideoReader:
         Retrieve the image at a specific frame number.
         Keeps the video file open to avoid overhead of reopening the file.
         """
+        # check the video has this frame
+        if frame_number > self.nframes:
+            raise ValueError(
+                f"Cannot get frame number '{frame_number}'. Video at '{self.file_path} only has '{self.nframes}'."
+            )
         # re-open the video if closed accidentally
         if not self.vid.isOpened():
             self.vid = cv2.VideoCapture(self.file_path)
