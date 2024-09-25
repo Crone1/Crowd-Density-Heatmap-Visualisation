@@ -106,6 +106,15 @@ def process_csv_dataframes(list_of_dfs):
     return resampled_df.ffill(limit_area="inside")
 
 
+def uint_to_float(array, scale=False):
+    if array.dtype == np.uint8:
+        if scale:
+            array = cv2.normalize(array, np.zeros(array.shape), 0, 1, cv2.NORM_MINMAX)
+        else:
+            array = array / 255.0
+    return array
+
+
 def create_area_masks(list_of_area_details, img_shape):
     """
     Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centres in a list
@@ -350,7 +359,7 @@ def fig_to_img(fig):
     buf = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(h, w, 4)
 
     # ARGB -> BGR
-    return buf[:, :, ::-1][:, :, :3]/255
+    return uint_to_float(buf[:, :, ::-1][:, :, :3])
 
 
 def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours):
@@ -709,6 +718,7 @@ def main():
         int(default_configs["video"]["proportions"]["width"]["background"] * video_width),
         int(default_configs["video"]["proportions"]["height"]["background"] * video_height),
     )
+    background_image.image = uint_to_float(background_image.image)
 
     # dissect the area details
     shape_objects = create_area_masks(area_details, background_image.shape)
@@ -740,8 +750,7 @@ def main():
     )
 
     # iterate through each row in the dataframe
-    print("time before iteration through rows = {}".format(time.time() - start_time))
-    new_start_time = time.time()
+    before_iteration_time = new_start_time = time.time()
     try:
         for i, (timestamp, sensor_vals) in tqdm(enumerate(joined_df.iterrows()), total=len(joined_df)):
 
@@ -830,6 +839,7 @@ def main():
         print("---- BEFORE LOOPING ----")
         print("colourmap = {}".format(colmap_creation_time))
         print("joined_df = {}".format(joined_df_time))
+        print("time before iteration = {}".format(before_iteration_time - start_time))
         print("---- IN LOOP ----")
         print("define heatmap = {}".format(sum(define_heatmap_times)))
         print("define event box = {}".format(sum(define_event_box_times)))

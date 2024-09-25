@@ -4,10 +4,6 @@
 borders:
   areas:
     colour: [1, 1, 1]  # anything except [0, 0, 0]
-  bar_plot:
-    colour: [0, 0, 0]
-    type: BORDER_CONSTANT
-    width_proportion: 0.05
   cameras:
     colour: [0, 0, 0]
     type: BORDER_CONSTANT
@@ -62,15 +58,22 @@ arrows:
   head_length: 15
 
 
-# configure background
-background:
+# configure background areas
+background_areas:
   outline_colour: [0, 0, 0]
   outline_thickness: 2
   transparency_alpha: 0.5
   transparency_gamma: 0
   colour_when_nan: [130, 130, 140]
+  text_when_nan: "No Data"
 
 
 # configurate events text box
 events_box:
   text_duration: 5
+
+
+# configurate cameras
+cameras:
+  colour_when_finished: [130, 130, 140]
+  text_when_finished: "No Video"
