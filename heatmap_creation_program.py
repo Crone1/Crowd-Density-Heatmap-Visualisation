@@ -7,6 +7,7 @@ import numpy as np
 import yaml
 import time
 import cv2
+from tqdm.auto import tqdm
 
 # import helper classes
 from components.colourmap import ColourMap
@@ -45,33 +46,11 @@ define_heatmap_times = []
 define_event_box_times = []
 define_timer_times = []
 central_merge_times = []
-video_list = []
-resize_list = []
-concat_outside_list = []
-bar_list = []
-video_2_frames_list = []
-merge_list = []
-slice_list = []
-concat_inside_list = []
-border_list = []
-read_in_list = []
-merge_heatmap = []
-colmap_creation = []
-
-
-def create_area_masks(list_of_area_details, img_shape):
-    """
-    Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centres in a list
-
-    list_of_area_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
-    img_shape : tuple (int, int, int) - the size of the background image that the masks are to be drawn on
-
-    return : list of shape objects
-    """
-    area_shapes = [Shape.from_dict(area_info_dict) for area_info_dict in list_of_area_details]
-    for shape in area_shapes:
-        shape.create_masks(img_shape, outline_thickness=background_configs["outline_thickness"])
-    return area_shapes
+read_frame_times = []
+define_bar_plot_times = []
+side_merge_times = []
+draw_arrows_times = []
+loop_times = []
 
 
 def read_csvs_into_dataframes(csv_file_paths):
@@ -91,8 +70,11 @@ def read_csvs_into_dataframes(csv_file_paths):
         # turn minute to second
         raw_df["Second"] = raw_df["Minute"].astype(float) * 60
         df = raw_df.drop(columns=["Minute"])
-        # set second as index
-        processed_dfs.append(df.sort_values("Second").set_index("Second"))
+        # average duplicate values
+        processed_df = df.groupby('Second').mean()
+        # make second index a datetime object
+        processed_df.index = pd.to_datetime(processed_df.index, unit="s")
+        processed_dfs.append(processed_df)
 
     return processed_dfs
 
@@ -113,16 +95,30 @@ def process_csv_dataframes(list_of_dfs):
         return list_of_dfs[0]
 
     # join the dataframes together
-    joined_df = pd.concat(list_of_dfs, axis=0, join="outer").sort_index()
+    joined_df = pd.concat(list_of_dfs, axis=1, join="outer").sort_index()
 
     # fill the non-leading and non-trailing "Nan" values
     filled_df = joined_df.ffill(limit_area="inside")
 
     # resample the dataframe to one row for each second - avg values with more rows per second
-    filled_df.index = pd.to_datetime(filled_df.index, unit="s")
     resampled_df = filled_df.resample('1s').mean()
 
     return resampled_df.ffill(limit_area="inside")
+
+
+def create_area_masks(list_of_area_details, img_shape):
+    """
+    Function Goal : Iterate over the dictionaries, call the function "create_array_of_shapes" and put the created arrays and their centres in a list
+
+    list_of_area_details : list of dictionaries - a list of dictionaries containing the details needed to identify the shapes and their coordinates on the image
+    img_shape : tuple (int, int, int) - the size of the background image that the masks are to be drawn on
+
+    return : list of shape objects
+    """
+    area_shapes = [Shape.from_dict(area_info_dict) for area_info_dict in list_of_area_details]
+    for shape in area_shapes:
+        shape.create_masks(img_shape, outline_thickness=background_configs["outline_thickness"])
+    return area_shapes
 
 
 def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
@@ -136,11 +132,11 @@ def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
 
     return : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     """
-    default_colour = np.reshape(background_configs["colour_when_nan"], (1, 1, 3)) / 255
+    default_colour = np.array(background_configs["colour_when_nan"]) / 255
     outline_colour = heatmap_configs["borders"]["areas"]["colour"]
     coloured_shape_objs = []
     for val, shape in zip(sensor_values, shape_objects):
-        area_colour = default_colour if np.isnan(val) else mapper.to_rgba(val)[:3][::-1]
+        area_colour = default_colour if np.isnan(val) else np.array(mapper.to_rgba(val)[:3][::-1])
         shape.change_colour(fill_colour=area_colour, outline_colour=outline_colour)
         shape.create_merged_mask()
         coloured_shape_objs.append(shape)
@@ -204,6 +200,7 @@ def label_areas_on_background(background_with_areas, list_of_area_centres, names
         start_y_coord = int(centre_y + text_height/2)
 
         # put the text on the image
+        # TODO: write 'background_configs["text_when_nan"]' in area value is NaN
         cv2.putText(
             background_with_areas,
             name,
@@ -249,7 +246,7 @@ def create_event_text_box(second, events_dict, final_width, final_height, event_
 
         # define text variables
         event_thickness = int(x_width * font_configs["event_box"]["proportions"]["thickness"])
-        event_size = int(x_width * font_configs["event_box"]["proportions"]["size"])
+        event_size = x_width * font_configs["event_box"]["proportions"]["size"]
         event_font = cv2_dict[font_configs["event_box"]["type"]]
 
         # define position to draw text
@@ -328,7 +325,8 @@ def create_timer(second, final_width, final_height):
     # put border on the image
     bordered_timer = cv2.copyMakeBorder(
         timer, top=border_width, bottom=border_width, left=border_width, right=border_width,
-        borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"])
+        borderType=cv2_dict[border_configs["timer"]["type"]], value=border_configs["timer"]["colour"],
+    )
 
     return bordered_timer
 
@@ -628,6 +626,9 @@ def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_ca
 
             closest = get_ratio_interval_point(moved_centre, list_of_camera_image_midpoints[i], radius, distance-radius)
 
+        else:
+            raise ValueError(f"Encountered unexpected shape type: {shape_details["type"]}.")
+
         # draw line for the arrow between the edge of the area to the camera footage frame
         cv2.line(image, list_of_camera_image_midpoints[i], closest, arrow_configs["line_colour"], thickness=arrow_configs["line_thickness"],
                  lineType=arrow_configs["line_type"])
@@ -673,7 +674,7 @@ def get_list_of_camera_image_midpoints(first_x, distance_between_first_nd_second
             x = first_x
             y = ((2 * i) + 1) * left_token_height
 
-        elif i >= num_videos_on_lhs and i < num_videos_on_lhs + num_videos_on_rhs:
+        else:
             #  videos on the right hand side
             x = first_x + distance_between_first_nd_second
             y = ((2 * (i - num_videos_on_lhs)) + 1) * right_token_height
@@ -737,15 +738,14 @@ def main():
     # iterate through each row in the dataframe
     print("time before iteration through rows = {}".format(time.time() - start_time))
     new_start_time = time.time()
-    for i, (timestamp, sensor_vals) in enumerate(joined_df.iterrows()):
-        print("Row {}, {:.3g}% Done".format(str(i), (100 * i/len(joined_df))))
+    for i, (timestamp, sensor_vals) in tqdm(enumerate(joined_df.iterrows()), total=len(joined_df)):
 
         # define central heatmap image
         define_heatmap_start_time = time.time()
         coloured_shape_objects = add_colour_to_area_masks_and_merge(sensor_vals, shape_objects, cmap.mapper)
         background_with_areas = join_shapes_to_background(coloured_shape_objects, background_image.image)
         shape_centres = [shape.centre for shape in coloured_shape_objects]
-        csv_names = [os.path.basename(path)[:-3] for path in csv_file_paths]
+        csv_names = [path[-6:-4] for path in csv_file_paths]
         heatmap = label_areas_on_background(background_with_areas, shape_centres, csv_names)
         define_heatmap_times.append(time.time() - define_heatmap_start_time)
 
@@ -764,10 +764,9 @@ def main():
 
         # merge central heatmap components
         central_merge_start_time = time.time()
+        # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
         top_component = np.concatenate((event_box, heatmap), axis=0)
-        # merge colourmap and timer
         bottom_component = np.concatenate((cmap.image, timer), axis=1)
-        # merge colormap & timer with the heatmap & event box
         main_heatmap_component = np.concatenate((top_component, bottom_component), axis=0)
         central_merge_times.append(time.time() - central_merge_start_time)
 
@@ -791,18 +790,24 @@ def main():
         all_components = np.concatenate((lhs_component, main_heatmap_component, rhs_component), axis=1)
         side_merge_times.append(time.time() - side_merge_start_time)
 
-        # merge these images with the image of the colourmap and of the second
-        start_turn_images_to_one = time.time()
-        merged_image = turn_all_the_different_images_into_one_image(
-            main_heatmap_component, df_row, cctv_width, csv_names, cctv_video_list, num_videos_on_lhs,
+        """
+        # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
+        draw_arrows_start_time = time.time()
+        list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
+            camera_video_width, shapes_nd_background_image.shape[1],
+            num_videos_on_lhs, n_frames - num_videos_on_lhs, fully_merged_image.shape[0]
         )
-        turn_images_to_one_times.append(time.time() - start_turn_images_to_one)
+        final_image = draw_arrows_from_cameras_to_shapes(
+            fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, camera_video_width, height_of_text_box
+        )
+        draw_arrows_times.append(time.time() - draw_arrows_start_time)
+        """
 
         # write the images to the video
-        final_frame = Image.from_array(merged_image)
+        final_frame = Image.from_array(all_components)
         final_frame.write_to_video(writer)
 
-        print(time.time() - new_start_time)
+        loop_times.append(time.time() - new_start_time)
         new_start_time = time.time()
 
     # release the CCTV video objects
@@ -820,18 +825,12 @@ def main():
     print("define event box = {}".format(sum(define_event_box_times)))
     print("define timer = {}".format(sum(define_timer_times)))
     print("merge central heatmap = {}".format(sum(central_merge_times)))
-
-    print("video stuff = {}".format(sum(video_list)))
-    print("video_2_frames = {}".format(sum(video_2_frames_list)))
-    print("read in videos = {}".format(sum(read_in_list)))
-    print("merge = {}".format(sum(merge_list)))
-    print("concat outside = {}".format(sum(concat_outside_list)))
-    print("resize = {}".format(sum(resize_list)))
-    print("bar = {}".format(sum(bar_list)))
-    print("concat inside = {}".format(sum(concat_inside_list)))
-    print("slice = {}".format(sum(slice_list)))
-    print("border = {}".format(sum(border_list)))
-
+    print("read camera frames = {}".format(sum(read_frame_times)))
+    print("define bar plot = {}".format(sum(define_bar_plot_times)))
+    print("merge side heatmap = {}".format(sum(side_merge_times)))
+    print("draw arrows = {}".format(sum(draw_arrows_times)))
+    print("---- TOTAL ----")
+    print("Avg loop time = {}".format(np.mean(loop_times)))
     print("Time taken = {}".format(time.time() - start_time))
 
 
