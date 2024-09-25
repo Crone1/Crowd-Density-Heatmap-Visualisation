@@ -18,6 +18,7 @@ from input_handlers.heatmap_inputs import HeatmapInputHandler
 from input_output.video_reader import VideoReader
 
 # import utilities
+from utils.image_utils import fig_to_img, uint_to_float
 from utils.maths_utils import convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
 
@@ -105,15 +106,6 @@ def process_csv_dataframes(list_of_dfs):
     resampled_df = filled_df.resample('1s').mean()
 
     return resampled_df.ffill(limit_area="inside")
-
-
-def uint_to_float(array, scale=False):
-    if array.dtype == np.uint8:
-        if scale:
-            array = cv2.normalize(array, np.zeros(array.shape), 0, 1, cv2.NORM_MINMAX)
-        else:
-            array = array / 255.0
-    return array
 
 
 def create_area_masks(list_of_area_details, img_shape):
@@ -339,28 +331,6 @@ def create_timer(second, final_width, final_height):
     )
 
     return bordered_timer
-
-
-def fig_to_img(fig):
-    """
-    Function Goal : Turn a matplotlib figure into a BGRA image
-
-    adapted from: http://www.icare.univ-lille1.fr/tutorials/convert_a_matplotlib_figure
-
-    fig : matplotlib figure
-
-    return : 3D numpy array of integers - the image drawn from the matplotlib figure
-    """
-
-    # draw the renderer
-    fig.canvas.draw()
-
-    # Get the RGBA buffer from the figure
-    w, h = fig.canvas.get_width_height()
-    buf = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(h, w, 4)
-
-    # ARGB -> BGR
-    return uint_to_float(buf[:, :, ::-1][:, :, :3])
 
 
 def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours):
