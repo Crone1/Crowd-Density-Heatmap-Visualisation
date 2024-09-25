@@ -18,7 +18,7 @@ from input_handlers.heatmap_inputs import HeatmapInputHandler
 from input_output.video_reader import VideoReader
 
 # import utilities
-from utils.maths_utils import get_slope, get_equation_of_line, get_distance, get_ratio_interval_point, convert_cartesian_to_polar, convert_polar_to_cartesian
+from utils.maths_utils import convert_cartesian_to_polar, convert_polar_to_cartesian
 from configs.cv2_config import cv2_dict
 
 
@@ -505,83 +505,6 @@ def get_lhs_and_rhs_frames(video_frames, final_width, total_height):
     bordered_rhs_frames = [border_image(frame, border_width, border_type, border_colour) for frame in rhs_frames_with_txt]
 
     return bordered_lhs_frames, bordered_rhs_frames, bordered_lhs_frames[0].shape[0]
-
-
-def generate_all_points_on_outside_of_shape(corners):
-    """
-    Function Goal : To take the corners of the shape drawn and to use these to generate all the points that are on the outside permimeter of the shape drawn
-
-    corners : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of the points on the corners of the shape that was drawn
-
-    return : list of tuples of integers [(int, int), (int, int), ...etc.] - a list of points that surround the whole area
-    """
-
-    points = []
-    start_x, start_y = corners[0]
-    for x, y in corners[1:] + corners[:1]:
-
-        if start_x == x:
-            # line goes along x-axis (horizontal)
-
-            for new_y in range(min(start_y, y), max(start_y, y)):
-                points.append((x, new_y))
-
-        elif start_y == y:
-            # line goes along the y-axis (vertical)
-
-            for new_x in range(min(start_x, x), max(start_x, x)):
-                points.append((new_x, y))
-
-        else:
-            # line is slanted diagonally either upwards from left to right or downwards from left to right
-            slope = get_slope((start_x, start_y), (x, y))
-
-            length_on_x_axis = max(start_x, x) - min(start_x, x)
-
-            for i in range(arrow_configs["points_on_line"]):
-
-                x_val = min(start_x, x) + (i * length_on_x_axis) / arrow_configs["points_on_line"]
-
-                new_y = (slope * x_val) - (slope * start_x) + start_y
-
-                points.append((int(x_val), int(new_y)))
-
-        start_x = x
-        start_y = y
-
-    return points
-
-
-def get_closest_point(corners, camera_point, centre):
-    """
-    Function Goal : get a list of all the points on the outside of shape and find the closest point on the outside to the point given
-
-    corners : list of tuples of interest [(int, int), (int, int), ...etc.] - a list of the corner points of the rectangle/polygon
-    point : tuple of integers (int, int) - a point
-
-    return : the closest point on the outside of the shape to the point given
-    """
-
-    closest = ""
-    closest_dist_to_line = np.inf
-    list_of_points_on_outside = generate_all_points_on_outside_of_shape(corners)
-
-    cam_point = int(camera_point[0]), int(camera_point[1])
-    centre_point = int(centre[0]), int(centre[1])
-
-    coefficients_of_x_nd_y, constant = get_equation_of_line(centre_point, cam_point)
-
-    for point in list_of_points_on_outside:
-
-        if (centre[0] < camera_point[0] and centre[0] < point[0] < camera_point[0]) or (centre[0] > camera_point[0] and centre[0] > point[0] > camera_point[0]):
-
-            intercept_of_points = np.array(coefficients_of_x_nd_y).dot(np.array([point[0], point[1]]))
-
-            if np.abs(constant - intercept_of_points) < closest_dist_to_line:
-                closest = point
-                closest_dist_to_line = np.abs(constant - intercept_of_points)
-
-    return closest
 
 
 def draw_arrows_from_cameras_to_shapes(image, list_of_shapes_details, list_of_camera_image_midpoints, width_to_move, height_to_move):
