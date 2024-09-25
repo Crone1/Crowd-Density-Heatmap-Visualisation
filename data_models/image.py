@@ -1,6 +1,7 @@
 
 import numpy as np
 import cv2
+import os
 
 
 class Image:
@@ -52,7 +53,7 @@ class Image:
         """
         writer.write(np.uint8(self.image * 255))
 
-    def write_to_folder(self, folder_name):
+    def write_to_folder(self, folder_name, file_name):
         """
         Function Goal : write the image to a folder
 
@@ -60,4 +61,8 @@ class Image:
 
         return : None
         """
-        cv2.imwrite(folder_name, self.image*255)
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        if not os.path.isdir(folder_name):
+            raise ValueError("The supplied 'folder_name' is not a directory.")
+        cv2.imwrite(os.path.join(folder_name, file_name), self.image * 255)

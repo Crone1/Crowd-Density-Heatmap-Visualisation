@@ -32,12 +32,16 @@ class Shape:
         raise NotImplementedError("Subclasses must implement this method")
 
     def change_colour(self, fill_colour, outline_colour):
+        if (self.filled_mask is None) or (self.outline_mask is None):
+            raise ValueError("Cannot colour masks when they are empty. Please run 'create_masks()' first.")
         self.filled_mask = np.where(self.filled_mask == self.fill_colour, fill_colour, self.filled_mask)
         self.outline_mask = np.where(self.outline_mask == self.outline_colour, outline_colour, self.outline_mask)
         self.fill_colour = fill_colour
         self.outline_colour = outline_colour
 
     def create_merged_mask(self):
+        if (self.filled_mask is None) or (self.outline_mask is None):
+            raise ValueError("Cannot merge masks when masks are empty. Please run 'create_masks()' first.")
         self.merged_mask = np.where(self.outline_mask == self.outline_colour, self.outline_mask, self.filled_mask)
 
 

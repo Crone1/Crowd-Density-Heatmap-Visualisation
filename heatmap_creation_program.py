@@ -738,100 +738,106 @@ def main():
     # iterate through each row in the dataframe
     print("time before iteration through rows = {}".format(time.time() - start_time))
     new_start_time = time.time()
-    for i, (timestamp, sensor_vals) in tqdm(enumerate(joined_df.iterrows()), total=len(joined_df)):
+    try:
+        for i, (timestamp, sensor_vals) in tqdm(enumerate(joined_df.iterrows()), total=len(joined_df)):
 
-        # define central heatmap image
-        define_heatmap_start_time = time.time()
-        coloured_shape_objects = add_colour_to_area_masks_and_merge(sensor_vals, shape_objects, cmap.mapper)
-        background_with_areas = join_shapes_to_background(coloured_shape_objects, background_image.image)
-        shape_centres = [shape.centre for shape in coloured_shape_objects]
-        csv_names = [path[-6:-4] for path in csv_file_paths]
-        heatmap = label_areas_on_background(background_with_areas, shape_centres, csv_names)
-        define_heatmap_times.append(time.time() - define_heatmap_start_time)
+            # define central heatmap image
+            define_heatmap_start_time = time.time()
+            coloured_shape_objects = add_colour_to_area_masks_and_merge(sensor_vals, shape_objects, cmap.mapper)
+            background_with_areas = join_shapes_to_background(coloured_shape_objects, background_image.image)
+            shape_centres = [shape.centre for shape in coloured_shape_objects]
+            csv_names = [path[-6:-4] for path in csv_file_paths]
+            heatmap = label_areas_on_background(background_with_areas, shape_centres, csv_names)
+            define_heatmap_times.append(time.time() - define_heatmap_start_time)
 
-        # define event text box
-        define_event_box_start_time = time.time()
-        event_box_height = int(video_height * video_configs["proportions"]["height"]["events_box"])
-        event_duration = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
-        event_box = create_event_text_box(int(timestamp.timestamp()), event_details, heatmap.shape[1], event_box_height, event_duration)
-        define_event_box_times.append(time.time() - define_event_box_start_time)
+            # define event text box
+            define_event_box_start_time = time.time()
+            event_box_height = int(video_height * video_configs["proportions"]["height"]["events_box"])
+            event_duration = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
+            event_box = create_event_text_box(int(timestamp.timestamp()), event_details, heatmap.shape[1], event_box_height, event_duration)
+            define_event_box_times.append(time.time() - define_event_box_start_time)
 
-        # define timer
-        define_timer_start_time = time.time()
-        timer_width = int(video_width * video_configs["proportions"]["width"]["timer"])
-        timer = create_timer(int(timestamp.timestamp()), timer_width, colourmap_height)
-        define_timer_times.append(time.time() - define_timer_start_time)
+            # define timer
+            define_timer_start_time = time.time()
+            timer_width = int(video_width * video_configs["proportions"]["width"]["timer"])
+            timer = create_timer(int(timestamp.timestamp()), timer_width, colourmap_height)
+            define_timer_times.append(time.time() - define_timer_start_time)
 
-        # merge central heatmap components
-        central_merge_start_time = time.time()
-        # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
-        top_component = np.concatenate((event_box, heatmap), axis=0)
-        bottom_component = np.concatenate((cmap.image, timer), axis=1)
-        main_heatmap_component = np.concatenate((top_component, bottom_component), axis=0)
-        central_merge_times.append(time.time() - central_merge_start_time)
+            # merge central heatmap components
+            central_merge_start_time = time.time()
+            # TODO: Fix if int(width * proportion) rounds the shape down so expected shape is 1 off
+            top_component = np.concatenate((event_box, heatmap), axis=0)
+            bottom_component = np.concatenate((cmap.image, timer), axis=1)
+            main_heatmap_component = np.concatenate((top_component, bottom_component), axis=0)
+            central_merge_times.append(time.time() - central_merge_start_time)
 
-        # read the camera video frames
-        read_frame_start_time = time.time()
-        camera_video_width = int(video_width * video_configs["proportions"]["width"]["cameras"])
-        camera_frames = read_camera_frames(camera_video_objects, int(timestamp.timestamp()))
-        lhs_cam_frames, rhs_cam_frames, lhs_cam_height = get_lhs_and_rhs_frames(camera_frames, camera_video_width, main_heatmap_component.shape[0])
-        read_frame_times.append(time.time() - read_frame_start_time)
+            # read the camera video frames
+            read_frame_start_time = time.time()
+            camera_video_width = int(video_width * video_configs["proportions"]["width"]["cameras"])
+            camera_frames = read_camera_frames(camera_video_objects, int(timestamp.timestamp()))
+            lhs_cam_frames, rhs_cam_frames, lhs_cam_height = get_lhs_and_rhs_frames(camera_frames, camera_video_width, main_heatmap_component.shape[0])
+            read_frame_times.append(time.time() - read_frame_start_time)
 
-        # define bar plot
-        define_bar_plot_start_time = time.time()
-        area_colours = [shape.fill_colour for shape in coloured_shape_objects]
-        bar_plot = create_bar_plot(sensor_vals, camera_video_width, lhs_cam_height, csv_names, area_colours)
-        define_bar_plot_times.append(time.time() - define_bar_plot_start_time)
+            # define bar plot
+            define_bar_plot_start_time = time.time()
+            area_colours = [shape.fill_colour for shape in coloured_shape_objects]
+            bar_plot = create_bar_plot(sensor_vals, camera_video_width, lhs_cam_height, csv_names, area_colours)
+            define_bar_plot_times.append(time.time() - define_bar_plot_start_time)
 
-        # merge side components
-        side_merge_start_time = time.time()
-        lhs_component = np.concatenate((np.concatenate(lhs_cam_frames, axis=0), bar_plot), axis=0)
-        rhs_component = np.concatenate(rhs_cam_frames, axis=0)
-        all_components = np.concatenate((lhs_component, main_heatmap_component, rhs_component), axis=1)
-        side_merge_times.append(time.time() - side_merge_start_time)
+            # merge side components
+            side_merge_start_time = time.time()
+            lhs_component = np.concatenate((np.concatenate(lhs_cam_frames, axis=0), bar_plot), axis=0)
+            rhs_component = np.concatenate(rhs_cam_frames, axis=0)
+            all_components = np.concatenate((lhs_component, main_heatmap_component, rhs_component), axis=1)
+            side_merge_times.append(time.time() - side_merge_start_time)
 
-        """
-        # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
-        draw_arrows_start_time = time.time()
-        list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
-            camera_video_width, shapes_nd_background_image.shape[1],
-            num_videos_on_lhs, n_frames - num_videos_on_lhs, fully_merged_image.shape[0]
-        )
-        final_image = draw_arrows_from_cameras_to_shapes(
-            fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, camera_video_width, height_of_text_box
-        )
-        draw_arrows_times.append(time.time() - draw_arrows_start_time)
-        """
+            """
+            # draw arrows on the images joining the camera footage videos with their respective area on the heatmap
+            draw_arrows_start_time = time.time()
+            list_of_camera_image_midpoints = get_list_of_camera_image_midpoints(
+                camera_video_width, shapes_nd_background_image.shape[1],
+                num_videos_on_lhs, n_frames - num_videos_on_lhs, fully_merged_image.shape[0]
+            )
+            final_image = draw_arrows_from_cameras_to_shapes(
+                fully_merged_image, list_of_shapes_details, list_of_camera_image_midpoints, camera_video_width, height_of_text_box
+            )
+            draw_arrows_times.append(time.time() - draw_arrows_start_time)
+            """
 
-        # write the images to the video
-        final_frame = Image.from_array(all_components)
-        final_frame.write_to_video(writer)
+            # write the images to the video
+            final_frame = Image.from_array(all_components)
+            final_frame.write_to_folder("./vid_images", f"{str(int(timestamp.timestamp()))}.png")
+            final_frame.write_to_video(writer)
 
-        loop_times.append(time.time() - new_start_time)
-        new_start_time = time.time()
+            loop_times.append(time.time() - new_start_time)
+            new_start_time = time.time()
 
-    # release the CCTV video objects
-    for obj in camera_video_objects:
-        obj.release()
+    except Exception as e:
+        raise e
 
-    writer.release()
-    print("The video was written to the file with the name '" + video_output_file_path + "'.")
-
-    print("---- BEFORE LOOPING ----")
-    print("colourmap = {}".format(colmap_creation_time))
-    print("joined_df = {}".format(joined_df_time))
-    print("---- IN LOOP ----")
-    print("define heatmap = {}".format(sum(define_heatmap_times)))
-    print("define event box = {}".format(sum(define_event_box_times)))
-    print("define timer = {}".format(sum(define_timer_times)))
-    print("merge central heatmap = {}".format(sum(central_merge_times)))
-    print("read camera frames = {}".format(sum(read_frame_times)))
-    print("define bar plot = {}".format(sum(define_bar_plot_times)))
-    print("merge side heatmap = {}".format(sum(side_merge_times)))
-    print("draw arrows = {}".format(sum(draw_arrows_times)))
-    print("---- TOTAL ----")
-    print("Avg loop time = {}".format(np.mean(loop_times)))
-    print("Time taken = {}".format(time.time() - start_time))
+    finally:
+        # release the camera video objects
+        for obj in camera_video_objects:
+            obj.release()
+        # release the output video object
+        writer.release()
+        print("The video was written to the file with the name '" + video_output_file_path + "'.")
+        # print timings
+        print("---- BEFORE LOOPING ----")
+        print("colourmap = {}".format(colmap_creation_time))
+        print("joined_df = {}".format(joined_df_time))
+        print("---- IN LOOP ----")
+        print("define heatmap = {}".format(sum(define_heatmap_times)))
+        print("define event box = {}".format(sum(define_event_box_times)))
+        print("define timer = {}".format(sum(define_timer_times)))
+        print("merge central heatmap = {}".format(sum(central_merge_times)))
+        print("read camera frames = {}".format(sum(read_frame_times)))
+        print("define bar plot = {}".format(sum(define_bar_plot_times)))
+        print("merge side heatmap = {}".format(sum(side_merge_times)))
+        print("draw arrows = {}".format(sum(draw_arrows_times)))
+        print("---- TOTAL ----")
+        print("Avg loop time = {}".format(np.mean(loop_times)))
+        print("Time taken = {}".format(time.time() - start_time))
 
 
 if __name__ == '__main__':
