@@ -7,7 +7,7 @@ from utils.maths_utils import generate_points_on_shape_boundary, get_closest_poi
 
 class Shape:
     def __init__(self, shape_type):
-        self.shape_type = shape_type
+        self.type = shape_type
         self.centre = None
         self.filled_mask = None
         self.fill_colour = None
