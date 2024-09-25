@@ -16,14 +16,14 @@ video:
   resolution: 1080p
   proportions:
     height:
-      events_box: 0.12
-      background: 0.70
-      colourmap: 0.18
+      events_box: 0.15
+      background: 0.65
+      colourmap: 0.20
     width:
-      background: 0.5
-      cameras: 0.25  # x2 for LHS & RHS
-      colourmap: 0.42
-      timer: 0.08
+      background: 0.56
+      cameras: 0.22  # x2 for LHS & RHS
+      colourmap: 0.45
+      timer: 0.11
 
 
 # drawing defaults
