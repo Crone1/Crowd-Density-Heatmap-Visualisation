@@ -36,7 +36,7 @@ with open("configs/heatmap_configs.yaml", "r") as heatmap_config_file:
 border_configs = heatmap_configs["borders"]
 font_configs = heatmap_configs["fonts"]
 arrow_configs = heatmap_configs["arrows"]
-background_configs = heatmap_configs["background"]
+bg_area_configs = heatmap_configs["background_areas"]
 event_box_configs = heatmap_configs["events_box"]
 camera_configs = heatmap_configs["cameras"]
 
@@ -117,7 +117,7 @@ def create_area_masks(list_of_area_details, img_shape):
     """
     area_shapes = [Shape.from_dict(area_info_dict) for area_info_dict in list_of_area_details]
     for shape in area_shapes:
-        shape.create_masks(img_shape, outline_thickness=background_configs["outline_thickness"])
+        shape.create_masks(img_shape, outline_thickness=bg_area_configs["outline_thickness"])
     return area_shapes
 
 
@@ -132,7 +132,7 @@ def add_colour_to_area_masks_and_merge(sensor_values, shape_objects, mapper):
 
     return : list of shape objects - a list containing objects whereby the masks for each shape is accessible
     """
-    default_colour = np.array(background_configs["colour_when_nan"]) / 255
+    default_colour = np.array(bg_area_configs["colour_when_nan"]) / 255
     outline_colour = heatmap_configs["borders"]["areas"]["colour"]
     coloured_shape_objs = []
     for val, shape in zip(sensor_values, shape_objects):
@@ -164,11 +164,11 @@ def join_shapes_to_background(shape_objects, background_array):
 
     # overlay the joined shapes onto the background image
     background_with_areas = cv2.addWeighted(
-        src1=np.where(shapes_canvas != empty, shapes_canvas, background_array).astype(np.uint8),
-        alpha=background_configs["transparency_alpha"],
+        src1=np.where(shapes_canvas != empty, shapes_canvas, background_array),
+        alpha=bg_area_configs["transparency_alpha"],
         src2=background_array,
-        beta=1 - background_configs["transparency_alpha"],
-        gamma=background_configs["transparency_gamma"],
+        beta=1 - bg_area_configs["transparency_alpha"],
+        gamma=bg_area_configs["transparency_gamma"],
     )
 
     return background_with_areas
@@ -200,7 +200,7 @@ def label_areas_on_background(background_with_areas, list_of_area_centres, names
         start_y_coord = int(centre_y + text_height/2)
 
         # put the text on the image
-        # TODO: write 'background_configs["text_when_nan"]' in area value is NaN
+        # TODO: write 'bg_area_configs["text_when_nan"]' in area value is NaN
         cv2.putText(
             background_with_areas,
             name,
@@ -374,6 +374,7 @@ def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours
         ylim=(data_configs["min_value"], data_configs["max_value"]),
         ylabel=data_configs["title"],
     )
+    # TODO: make bar plot bars the same colour as heatmap areas
     plt.bar(names, sensor_values, color=bar_colours)
 
     # turn the figure to an image array
@@ -407,24 +408,27 @@ def read_camera_frames(video_objects, second):
     frames = []
     for video_obj in video_objects:
         try:
-            frame = video_obj.get_frame(video_obj.frame_rate * second)
+            frame = uint_to_float(video_obj.get_frame(video_obj.frame_rate * second))
         except ValueError:
             frame = np.zeros((1, 1, 3))
         frames.append(frame)
     return frames
 
 
-def add_text_if_empty(frame):
+def add_colour_and_text_if_empty(frame):
 
     # if the frame isn't empty, don't add text
-    if not np.array_equal(frame, np.zeros((1, 1, 3))):
+    if not (frame == np.zeros((1, 1, 3))).all():
         return frame
 
+    # add colour to frame
+    coloured_frame = np.where(frame == np.zeros((1, 1, 3)), camera_configs["colour_when_finished"], frame) / 255
+
     # get text to write
-    text = camera_configs["text_when_done"]
+    text = camera_configs["text_when_finished"]
 
     # define text variables
-    height, width, _ = frame.shape
+    height, width, _ = coloured_frame.shape
     frame_thickness = int(width * font_configs["cameras"]["proportions"]["thickness"])
     frame_size = width * font_configs["cameras"]["proportions"]["size"]
     frame_font = cv2_dict[font_configs["cameras"]["type"]]
@@ -436,17 +440,17 @@ def add_text_if_empty(frame):
 
     # draw the text on the image
     cv2.putText(
-        frame,
+        coloured_frame,
         text,
         (start_x, start_y),
         frame_font,
         frame_size,
-        color=font_configs["timer"]["colour"],
-        lineType=cv2_dict[font_configs["timer"]["line_type"]],
+        color=font_configs["cameras"]["colour"],
+        lineType=cv2_dict[font_configs["cameras"]["line_type"]],
         thickness=frame_thickness,
     )
 
-    return frame
+    return coloured_frame
 
 
 def get_lhs_and_rhs_frames(video_frames, final_width, total_height):
@@ -479,8 +483,8 @@ def get_lhs_and_rhs_frames(video_frames, final_width, total_height):
     resized_rhs_frames = [cv2.resize(frame, (x_width, rhs_y_height)) for frame in rhs_frames]
 
     # add text to empty frames
-    lhs_frames_with_txt = [add_text_if_empty(frame) for frame in resized_lhs_frames]
-    rhs_frames_with_txt = [add_text_if_empty(frame) for frame in resized_rhs_frames]
+    lhs_frames_with_txt = [add_colour_and_text_if_empty(frame) for frame in resized_lhs_frames]
+    rhs_frames_with_txt = [add_colour_and_text_if_empty(frame) for frame in resized_rhs_frames]
 
     # add border to images
     def border_image(image, width, btype, colour):
