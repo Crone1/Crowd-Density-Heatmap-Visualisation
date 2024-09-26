@@ -112,23 +112,29 @@ class ColourMap:
 
         # define position to draw the lines
         bottom_gap_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["bottom_gap"])
-        line_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["spectrum"]) + int(
-            self.inner_height * colourmap_configs["proportions"]["height"]["index_ticks"])
+        spectrum_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["spectrum"])
+        index_tick_height = int(self.inner_height * colourmap_configs["proportions"]["height"]["index_ticks"])
+        line_height = spectrum_height + index_tick_height
         y_coord = self.inner_height - bottom_gap_height
 
         # define x-coordinates to draw the lines at
         spectrum_width = int(self.inner_width * colourmap_configs["proportions"]["width"]["spectrum"])
         start_x_coord = int(self.inner_width * colourmap_configs["proportions"]["width"]["gap"])
         colourmap_divider = spectrum_width / colourmap_configs["lines"]["index"]["num"]
-        line_x_coords = [int(i * colourmap_divider) + start_x_coord for i in
-                         range(0, colourmap_configs["lines"]["index"]["num"] + 1)]
+        line_x_coords = [
+            int(i * colourmap_divider) + start_x_coord
+            for i in range(0, colourmap_configs["lines"]["index"]["num"] + 1)
+        ]
 
         # draw the colourmap index lines
         for x_coord in line_x_coords:
             colour = colourmap_configs["lines"]["index"]["colour"]
             half_thickness = int(self.inner_width * colourmap_configs["lines"]["index"]["width_proportion"]) // 2
-            self.image[(y_coord - line_height):y_coord, (x_coord - half_thickness):(x_coord + half_thickness),
-            :] = colour
+            self.image[
+                (y_coord - line_height):y_coord,
+                (x_coord - half_thickness):(x_coord + half_thickness),
+                :
+            ] = colour
 
         return line_x_coords, y_coord - line_height
 
@@ -140,10 +146,11 @@ class ColourMap:
         y_coord = start_y_coord - index_gap_height
 
         # define index values to draw
-        index_increment = (data_configs["max_value"] - data_configs["min_value"]) / colourmap_configs["lines"]["index"][
-            "num"]
-        index_values = [self._abbreviate_num((i * index_increment) + data_configs["min_value"]) for i in
-                        range(0, colourmap_configs["lines"]["index"]["num"] + 1)]
+        index_inc = (data_configs["max_value"] - data_configs["min_value"]) / colourmap_configs["lines"]["index"]["num"]
+        index_values = [
+            self._abbreviate_num((i * index_inc) + data_configs["min_value"])
+            for i in range(0, colourmap_configs["lines"]["index"]["num"] + 1)
+        ]
 
         # define text variables
         index_thickness = int(self.inner_width * colourmap_configs["text"]["index"]["proportions"]["thickness"])

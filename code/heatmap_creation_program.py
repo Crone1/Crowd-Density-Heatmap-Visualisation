@@ -249,8 +249,10 @@ def create_event_text_box(second, events_dict, final_width, final_height, event_
         # define position to draw text
         text_width, text_height = cv2.getTextSize(text, event_font, event_size, thickness=event_thickness)[0]
         while text_width > x_width:
-            print("WARNING: Event name associated with second '{}' is too long for text box. Will be truncated.".format(
-                sec_to_display))
+            print(
+                "WARNING: Event name associated with second '{sec_to_display}' is too long for text box. "
+                "Will be truncated."
+            )
             # TODO: Add newline instead of truncating
             text = text[:len(text) // 2]
             text_width, text_height = cv2.getTextSize(text, event_font, event_size, thickness=event_thickness)[0]
@@ -368,7 +370,7 @@ def create_bar_plot(sensor_values, final_width, final_height, names, bar_colours
     # put border on the image
     bordered_image = cv2.copyMakeBorder(
         image, top=border_width, bottom=border_width, left=border_width, right=border_width,
-        borderType=cv2_dict[border_configs["cameras"]["type"]], value=border_configs["cameras"]["colour"]
+        borderType=cv2_dict[border_configs["cameras"]["type"]], value=border_configs["cameras"]["colour"],
     )
 
     return bordered_image
@@ -465,16 +467,15 @@ def get_lhs_and_rhs_frames(video_frames, final_width, total_height):
     rhs_frames_with_txt = [add_colour_and_text_if_empty(frame) for frame in resized_rhs_frames]
 
     # add border to images
-    def border_image(image, width, btype, colour):
-        return cv2.copyMakeBorder(image, top=width, bottom=width, left=width, right=width, borderType=btype,
-                                  value=colour)
+    def add_border(image, width, btype, colour):
+        return cv2.copyMakeBorder(
+            image, top=width, bottom=width, left=width, right=width, borderType=btype, value=colour,
+        )
 
     border_type = cv2_dict[border_configs["cameras"]["type"]]
     border_colour = border_configs["cameras"]["colour"]
-    bordered_lhs_frames = [border_image(frame, border_width, border_type, border_colour) for frame in
-                           lhs_frames_with_txt]
-    bordered_rhs_frames = [border_image(frame, border_width, border_type, border_colour) for frame in
-                           rhs_frames_with_txt]
+    bordered_lhs_frames = [add_border(frame, border_width, border_type, border_colour) for frame in lhs_frames_with_txt]
+    bordered_rhs_frames = [add_border(frame, border_width, border_type, border_colour) for frame in rhs_frames_with_txt]
 
     return bordered_lhs_frames, bordered_rhs_frames, bordered_lhs_frames[0].shape[0]
 
@@ -502,8 +503,10 @@ def draw_arrows_from_cameras_to_shapes(image, shape_objects, camera_image_midpoi
         arrow_thickness = int(width * arrow_configs["proportions"]["thickness"])
         arrow_type = arrow_configs["line_type"]
         arrow_colour = arrow_configs["colour"]
-        cv2.line(img=image, pt1=cam_midpoint, pt2=closest, color=arrow_colour, thickness=arrow_thickness,
-                 lineType=arrow_type)
+        cv2.line(
+            img=image, pt1=cam_midpoint, pt2=closest,
+            color=arrow_colour, thickness=arrow_thickness, lineType=arrow_type,
+        )
 
         # define arrow-head angle
         dist_between_point = (cam_midpoint[0] - closest[0], cam_midpoint[1] - closest[1])
@@ -515,12 +518,8 @@ def draw_arrows_from_cameras_to_shapes(image, shape_objects, camera_image_midpoi
         for angle in angles:
             x, y = convert_polar_to_cartesian(head_length, angle)
             cv2.line(
-                img=image,
-                pt1=(closest[0] + x, closest[1] + y),
-                pt2=closest,
-                color=arrow_colour,
-                thickness=arrow_thickness,
-                lineType=arrow_type,
+                img=image, pt1=(closest[0] + x, closest[1] + y), pt2=closest,
+                color=arrow_colour, thickness=arrow_thickness, lineType=arrow_type,
             )
 
     return image
@@ -625,11 +624,8 @@ def main():
 
     # create the writer to write the image to the video
     writer = cv2.VideoWriter(
-        filename=video_output_file_path,
-        fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
-        fps=video_configs["frame_rate"],
-        frameSize=(video_width, video_height),
-        isColor=True,
+        filename=video_output_file_path, fourcc=cv2.VideoWriter_fourcc(*'mp4v'),
+        fps=video_configs["frame_rate"], frameSize=(video_width, video_height), isColor=True,
     )
 
     # iterate through each row in the dataframe
@@ -649,8 +645,9 @@ def main():
             define_event_box_start_time = time.time()
             event_box_height = int(video_height * video_configs["proportions"]["height"]["events_box"])
             event_duration = int(video_configs["frame_rate"] * event_box_configs["text_duration"])
-            event_box = create_event_text_box(int(timestamp.timestamp()), event_details, heatmap.shape[1],
-                                              event_box_height, event_duration)
+            event_box = create_event_text_box(
+                int(timestamp.timestamp()), event_details, heatmap.shape[1], event_box_height, event_duration,
+            )
             define_event_box_times.append(time.time() - define_event_box_start_time)
 
             # define timer
@@ -671,8 +668,9 @@ def main():
             camera_video_width = int(video_width * video_configs["proportions"]["width"]["cameras"])
             # TODO: only read a frame from the video if there is a corresponding sensor value
             camera_frames = read_camera_frames(camera_video_objects, int(timestamp.timestamp()))
-            lhs_cam_frames, rhs_cam_frames, lhs_cam_height = get_lhs_and_rhs_frames(camera_frames, camera_video_width,
-                                                                                    main_heatmap_component.shape[0])
+            lhs_cam_frames, rhs_cam_frames, lhs_cam_height = get_lhs_and_rhs_frames(
+                camera_frames, camera_video_width, main_heatmap_component.shape[0],
+            )
             read_frame_times.append(time.time() - read_frame_start_time)
 
             # define bar plot
@@ -692,10 +690,12 @@ def main():
             draw_arrows_start_time = time.time()
             camera_midpoints = get_camera_image_midpoints(
                 camera_video_width, (camera_video_width + main_heatmap_component.shape[1]),
-                len(lhs_cam_frames), len(rhs_cam_frames), lhs_component.shape[0]
+                len(lhs_cam_frames), len(rhs_cam_frames), lhs_component.shape[0],
             )
-            adjusted_shapes = [shape.adjust(x_offset=camera_video_width, y_offset=event_box_height) for shape in
-                               coloured_shape_objects]
+            adjusted_shapes = [
+                shape.adjust(x_offset=camera_video_width, y_offset=event_box_height)
+                for shape in coloured_shape_objects
+            ]
             final_image = draw_arrows_from_cameras_to_shapes(all_components, adjusted_shapes, camera_midpoints)
             draw_arrows_times.append(time.time() - draw_arrows_start_time)
 
