@@ -1,4 +1,5 @@
 
+import os.path
 import yaml
 import numpy as np
 import cv2
@@ -9,9 +10,10 @@ from configs.cv2_config import cv2_dict
 
 
 # read the colourmap customisation configuration variables
-with open("configs/colourmap_configs.yaml", "r") as colmap_config_file:
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+with open(os.path.join(root_dir, "configs", "colourmap_configs.yaml"), "r") as colmap_config_file:
     colourmap_configs = yaml.load(colmap_config_file, Loader=yaml.FullLoader)
-with open("configs/default_configs.yaml", "r") as default_config_file:
+with open(os.path.join(root_dir, "configs", "default_configs.yaml"), "r") as default_config_file:
     data_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)["data"]
 
 

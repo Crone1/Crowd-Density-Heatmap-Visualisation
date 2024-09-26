@@ -10,6 +10,7 @@ import numpy as np
 import json
 import yaml
 import cv2
+import os.path
 
 from input_handlers.drawing_inputs import DrawingInputHandler
 
@@ -17,11 +18,12 @@ from utils.maths_utils import get_distance_to_point
 
 
 # read the drawing customisation configuration variables
-with open("configs/drawing_configs.yaml", "r") as drawing_config_file:
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+with open(os.path.join(root_dir, "configs", "drawing_configs.yaml"), "r") as drawing_config_file:
     drawing_configs = yaml.load(drawing_config_file, Loader=yaml.FullLoader)
-with open("configs/default_configs.yaml", "r") as default_config_file:
+with open(os.path.join(root_dir, "configs", "default_configs.yaml"), "r") as default_config_file:
     default_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)
-with open("configs/video_resolutions.yaml", "r") as resolution_file:
+with open(os.path.join(root_dir, "configs", "video_resolutions.yaml"), "r") as resolution_file:
     resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
 
 

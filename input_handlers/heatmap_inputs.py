@@ -16,7 +16,8 @@ from utils.input_utils import exit_if_false, exit_if_try_fails
 
 
 # read the default configuration variables
-with open("configs/default_configs.yaml", "r") as defaults_file:
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+with open(os.path.join(root_dir, "configs", "default_configs.yaml"), "r") as defaults_file:
     default_configs = yaml.load(defaults_file, Loader=yaml.FullLoader)
 default_drawing_output_file = default_configs["drawing"]["output_file_path"]
 default_video_output_file = default_configs["heatmap"]["output_file_path"]

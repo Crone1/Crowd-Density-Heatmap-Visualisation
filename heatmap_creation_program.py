@@ -8,6 +8,7 @@ import yaml
 import time
 import cv2
 from tqdm.auto import tqdm
+import os.path
 
 # import helper classes
 from components.colourmap import ColourMap
@@ -22,16 +23,17 @@ from configs.cv2_config import cv2_dict
 
 
 # read configurations
-with open("configs/video_resolutions.yaml", "r") as resolution_file:
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+with open(os.path.join(root_dir, "configs", "video_resolutions.yaml"), "r") as resolution_file:
     resolution_configs = yaml.load(resolution_file, Loader=yaml.FullLoader)
-with open("configs/default_configs.yaml", "r") as default_config_file:
+with open(os.path.join(root_dir, "configs", "default_configs.yaml"), "r") as default_config_file:
     default_configs = yaml.load(default_config_file, Loader=yaml.FullLoader)
 data_configs = default_configs["data"]
 video_configs = default_configs["video"]
 
 
 # read the heatmap customisation configuration variables
-with open("configs/heatmap_configs.yaml", "r") as heatmap_config_file:
+with open(os.path.join(root_dir, "configs", "heatmap_configs.yaml"), "r") as heatmap_config_file:
     heatmap_configs = yaml.load(heatmap_config_file, Loader=yaml.FullLoader)
 border_configs = heatmap_configs["borders"]
 font_configs = heatmap_configs["fonts"]
