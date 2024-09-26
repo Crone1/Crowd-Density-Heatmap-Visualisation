@@ -37,8 +37,8 @@ fonts:
     type: FONT_HERSHEY_SIMPLEX
     line_type: LINE_AA
     proportions:
-      size: 0.1
-      thickness: 0.05
+      size: 0.002
+      thickness: 0.01
   timer:
     colour: [0, 0, 0]
     type: FONT_HERSHEY_PLAIN
