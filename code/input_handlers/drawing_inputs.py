@@ -1,4 +1,3 @@
-
 # import libraries
 import argparse
 import os.path
@@ -33,10 +32,14 @@ class DrawingInputHandler:
         # check it's not empty
         exit_if_false(image_path, error="You did not enter a valid path to an image.", criteria=universal_criteria)
         # ensure it has correct extension
-        supported_extensions = [".bmp", ".dib", ".jpeg", ".jpg", ".jpe", ".jp2", ".png", ".webp", ".pbm", ".pgm", ".ppm", ".pxm", ".pnm", ".sr", ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic"]
-        exit_if_false(os.path.splitext(image_path)[-1] in supported_extensions, error="The file path entered does not have a supported file extension.", criteria=universal_criteria)
+        supported_extensions = [".bmp", ".dib", ".jpeg", ".jpg", ".jpe", ".jp2", ".png", ".webp", ".pbm", ".pgm",
+                                ".ppm", ".pxm", ".pnm", ".sr", ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic"]
+        exit_if_false(os.path.splitext(image_path)[-1] in supported_extensions,
+                      error="The file path entered does not have a supported file extension.",
+                      criteria=universal_criteria)
         # check the path exists
-        exit_if_false(os.path.exists(image_path), error="The file path entered does not point to an existing file.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(image_path), error="The file path entered does not point to an existing file.",
+                      criteria=universal_criteria)
         # check the file is an image file
         exit_if_try_fails(
             cv2.imread,
@@ -56,9 +59,13 @@ class DrawingInputHandler:
         exit_if_false(file_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
         # check the directories in the path exists
         folder_path = os.path.dirname(file_path)
-        exit_if_false(os.path.exists(folder_path), error="The folder structure in the file path entered does not exist.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(folder_path),
+                      error="The folder structure in the file path entered does not exist.",
+                      criteria=universal_criteria)
         # check the path is a directory
-        exit_if_false(os.path.isdir(folder_path), error="The folder structure in the file path entered does not point to a folder.", criteria=universal_criteria)
+        exit_if_false(os.path.isdir(folder_path),
+                      error="The folder structure in the file path entered does not point to a folder.",
+                      criteria=universal_criteria)
         # check if something will be overwritten
         if os.path.isfile(file_path):
             print("WARNING: file contents at '{}' will be overwritten.".format(file_path))
@@ -67,7 +74,8 @@ class DrawingInputHandler:
 
     def _get_variables_from_command_line(self):
 
-        parser = argparse.ArgumentParser(description="Draw areas onto a background image and store the details of these areas in a file.")
+        parser = argparse.ArgumentParser(
+            description="Draw areas onto a background image and store the details of these areas in a file.")
 
         # background image name
         parser.add_argument(

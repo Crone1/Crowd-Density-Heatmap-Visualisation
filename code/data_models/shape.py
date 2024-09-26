@@ -1,4 +1,3 @@
-
 # import libraries
 import cv2
 import numpy as np
@@ -79,7 +78,8 @@ class Rectangle(Shape):
         self.fill_colour = fill_colour
         # outline mask
         outline_canvas = np.zeros(img_size)
-        cv2.rectangle(outline_canvas, self.start_point, self.end_point, color=outline_colour, thickness=outline_thickness)
+        cv2.rectangle(outline_canvas, self.start_point, self.end_point, color=outline_colour,
+                      thickness=outline_thickness)
         self.outline_mask = outline_canvas
         self.outline_colour = outline_colour
 
@@ -148,7 +148,8 @@ class Polygon(Shape):
         self.fill_colour = fill_colour
         # outline mask
         outline_canvas = np.zeros(img_size)
-        cv2.polylines(outline_canvas, pts=np.int32([self.points]), isClosed=True, color=outline_colour, thickness=outline_thickness)
+        cv2.polylines(outline_canvas, pts=np.int32([self.points]), isClosed=True, color=outline_colour,
+                      thickness=outline_thickness)
         self.outline_mask = outline_canvas
         self.outline_colour = outline_colour
 

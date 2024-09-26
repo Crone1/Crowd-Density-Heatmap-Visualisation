@@ -1,4 +1,3 @@
-
 import numpy as np
 
 
@@ -11,7 +10,7 @@ def get_slope(p1, p2):
 
     return : integer - the slope of the line going through the 2 points
     """
-    return (p2[1] - p1[1])/(p2[0] - p1[0])
+    return (p2[1] - p1[1]) / (p2[0] - p1[0])
 
 
 def get_equation_of_line(p1, p2):
@@ -53,7 +52,7 @@ def get_distance_to_line(line_start, line_end, point):
 
     return : float - the distance between the point and the line
     """
-    return np.linalg.norm(np.cross(line_end-line_start, line_start-point))/np.linalg.norm(line_end-line_start)
+    return np.linalg.norm(np.cross(line_end - line_start, line_start - point)) / np.linalg.norm(line_end - line_start)
 
 
 def get_ratio_interval_point(p1, p2, a, b):
@@ -67,8 +66,8 @@ def get_ratio_interval_point(p1, p2, a, b):
 
     return : tuple of integers (int, int) - the point that divides the 2 points into the ration a:b
     """
-    x = ((b * p1[0]) + (a * p2[0]))/(a + b)
-    y = ((b * p1[1]) + (a * p2[1]))/(a + b)
+    x = ((b * p1[0]) + (a * p2[0])) / (a + b)
+    y = ((b * p1[1]) + (a * p2[1])) / (a + b)
     return int(x), int(y)
 
 
@@ -80,7 +79,7 @@ def convert_cartesian_to_polar(point):
 
     return : float, float - the distance between the point and the origin and the angle between a line from the point to the origin and the x axis
     """
-    rho = np.sqrt(point[0]**2 + point[1]**2)
+    rho = np.sqrt(point[0] ** 2 + point[1] ** 2)
     phi = np.arctan2(point[1], point[0])
     return rho, phi
 
@@ -135,7 +134,7 @@ def generate_points_on_shape_boundary(boundary_points):
                     point = (x_val, new_y)
                 else:
                     y_val = min(prev_y, y) + j
-                    new_x = int(prev_x + ((y_val - prev_y)/slope))
+                    new_x = int(prev_x + ((y_val - prev_y) / slope))
                     point = (new_x, y_val)
                 gen_points.add(point)
 

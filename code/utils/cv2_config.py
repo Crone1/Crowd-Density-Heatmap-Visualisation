@@ -1,4 +1,3 @@
-
 import cv2
 
 cv2_dict = {

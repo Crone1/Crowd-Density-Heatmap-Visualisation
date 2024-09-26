@@ -1,4 +1,3 @@
-
 # import libraries
 import argparse
 import json
@@ -46,9 +45,11 @@ class HeatmapInputHandler:
         # check it's not empty
         exit_if_false(folder_path, error="You did not enter a valid path to a folder.", criteria=universal_criteria)
         # check the path exists
-        exit_if_false(os.path.exists(folder_path), error="The folder path entered does not exist.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(folder_path), error="The folder path entered does not exist.",
+                      criteria=universal_criteria)
         # check the path is a directory
-        exit_if_false(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.", criteria=universal_criteria)
+        exit_if_false(os.path.isdir(folder_path), error="The folder path entered does not point to a folder.",
+                      criteria=universal_criteria)
 
         # extract the file paths from the folder
         file_paths = []
@@ -82,11 +83,14 @@ class HeatmapInputHandler:
 
         universal_criteria = "the path to the background image points to a valid image file."
         # check it's not empty
-        exit_if_false(image_path, error="You did not enter a valid path to a background image.", criteria=universal_criteria)
+        exit_if_false(image_path, error="You did not enter a valid path to a background image.",
+                      criteria=universal_criteria)
         # check the path exists
-        exit_if_false(os.path.exists(image_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(image_path), error="The file path entered does not exist.",
+                      criteria=universal_criteria)
         # check the path is a file
-        exit_if_false(os.path.isfile(image_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_false(os.path.isfile(image_path), error="The file path entered does not point to a file.",
+                      criteria=universal_criteria)
         # check the file is an image file
         exit_if_try_fails(
             cv2.imread,
@@ -114,14 +118,17 @@ class HeatmapInputHandler:
         # check it's not empty
         exit_if_false(file_path, error="You did not enter a valid path to a json file.", criteria=universal_criteria)
         # check the path exists
-        exit_if_false(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(file_path), error="The file path entered does not exist.",
+                      criteria=universal_criteria)
         # check the path is a file
-        exit_if_false(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_false(os.path.isfile(file_path), error="The file path entered does not point to a file.",
+                      criteria=universal_criteria)
 
         # check it's a json file
         def _load_json(path):
             with open(path, "r") as file:
                 return json.load(file)
+
         exit_if_try_fails(
             _load_json,
             args=[file_path],
@@ -130,7 +137,8 @@ class HeatmapInputHandler:
             criteria=universal_criteria
         )
         # check json file is not empty
-        exit_if_false(_load_json(file_path), error="The file path entered points to an empty json file.", criteria=universal_criteria)
+        exit_if_false(_load_json(file_path), error="The file path entered points to an empty json file.",
+                      criteria=universal_criteria)
         # TODO: check coordinates align with the expected coordinates in the output video
 
         # extract area details from file
@@ -143,14 +151,17 @@ class HeatmapInputHandler:
         # check it's not empty
         exit_if_false(file_path, error="You did not enter a valid path to a text file.", criteria=universal_criteria)
         # check the path exists
-        exit_if_false(os.path.exists(file_path), error="The file path entered does not exist.", criteria=universal_criteria)
+        exit_if_false(os.path.exists(file_path), error="The file path entered does not exist.",
+                      criteria=universal_criteria)
         # check the path is a file
-        exit_if_false(os.path.isfile(file_path), error="The file path entered does not point to a file.", criteria=universal_criteria)
+        exit_if_false(os.path.isfile(file_path), error="The file path entered does not point to a file.",
+                      criteria=universal_criteria)
 
         # check it's a readable file
         def _read_file(path):
             with open(path, "r") as file:
                 return file.readlines()
+
         exit_if_try_fails(
             _read_file,
             args=[file_path],
@@ -162,6 +173,7 @@ class HeatmapInputHandler:
         # check it's the correct format
         def _check_first_token_is_int(path):
             int(_read_file(path)[0].strip().split(" ")[0])
+
         exit_if_try_fails(
             _check_first_token_is_int,
             args=[file_path],
@@ -183,7 +195,8 @@ class HeatmapInputHandler:
         Function Goal: This function is used to read all the variables in from the command line arguments
         """
 
-        parser = argparse.ArgumentParser(description="Create a heatmap video of the changes in value across different areas drawn onto a background image.")
+        parser = argparse.ArgumentParser(
+            description="Create a heatmap video of the changes in value across different areas drawn onto a background image.")
 
         # background image path
         parser.add_argument(
@@ -212,7 +225,7 @@ class HeatmapInputHandler:
             type=str,
             required=False,
             help="The path to the file where the heatmap video will be output to.",
-            )
+        )
         # area details file path
         parser.add_argument(
             '-af',
@@ -252,7 +265,8 @@ class HeatmapInputHandler:
         self.video_output_file_path = self._process_output_file_name(args.video_output_file_path)
         if args.area_details_file_path == "draw":
             self.area_details = drawing_program(self.background_image, default_drawing_output_file)
-            print(f"We have output the details of these drawn areas to '{default_drawing_output_file}' so you don't have to draw them again next time!")
+            print(
+                f"We have output the details of these drawn areas to '{default_drawing_output_file}' so you don't have to draw them again next time!")
         else:
             self.area_details = self._get_heatmap_area_details(args.area_details_file_path)
         if args.events_file_path != "none":
@@ -267,32 +281,39 @@ class HeatmapInputHandler:
         self.background_image = self._process_background_image(supplied_background_image_path)
 
         # csv folder
-        supplied_csv_folder_path = input("Please enter the path to the folder containing the CSV data used to colour the heatmap: ")
+        supplied_csv_folder_path = input(
+            "Please enter the path to the folder containing the CSV data used to colour the heatmap: ")
         self.csv_file_paths = self._get_file_paths(supplied_csv_folder_path, "csv")
 
         # video output file name
-        video_output_file_path = input("Please enter the path to the file where the heatmap video will be output to (Press 'Enter' for default): ")
+        video_output_file_path = input(
+            "Please enter the path to the file where the heatmap video will be output to (Press 'Enter' for default): ")
         if video_output_file_path == "":
             self.video_output_file_path = default_video_output_file
-            print("\nThe final heatmap video will be output to the default file - '{}'.".format(default_video_output_file))
+            print("\nThe final heatmap video will be output to the default file - '{}'.".format(
+                default_video_output_file))
         else:
             self.video_output_file_path = self._process_output_file_name(video_output_file_path)
 
         # area details
-        supplied_area_details_file_path = input("Please enter the path to the file containing details of the heatmap areas (Press 'Enter' to draw them): ")
+        supplied_area_details_file_path = input(
+            "Please enter the path to the file containing details of the heatmap areas (Press 'Enter' to draw them): ")
         if supplied_area_details_file_path == "draw":
             self.area_details = drawing_program(self.background_image, default_drawing_output_file)
-            print(f"We have output the details of these drawn areas to '{default_drawing_output_file}' so you don't have to draw them again next time!")
+            print(
+                f"We have output the details of these drawn areas to '{default_drawing_output_file}' so you don't have to draw them again next time!")
         else:
             self.area_details = self._get_heatmap_area_details(supplied_area_details_file_path)
 
         # events file
-        supplied_events_file_path = input("Please enter the path to the file containing details of events which happen during the video (Press 'Enter' to skip): ")
+        supplied_events_file_path = input(
+            "Please enter the path to the file containing details of events which happen during the video (Press 'Enter' to skip): ")
         if supplied_events_file_path != "":
             self.event_details = self._get_event_details(supplied_events_file_path)
 
         # videos folder
-        supplied_videos_folder_path = input("Please enter the path of the folder containing the video footage which accompanies the CSV data (Press 'Enter' to skip): ")
+        supplied_videos_folder_path = input(
+            "Please enter the path of the folder containing the video footage which accompanies the CSV data (Press 'Enter' to skip): ")
         if supplied_videos_folder_path != "":
             self.video_file_paths = self._get_file_paths(supplied_videos_folder_path, "mp4")
 
