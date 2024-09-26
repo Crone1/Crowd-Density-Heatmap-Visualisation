@@ -9,7 +9,7 @@ import pandas as pd
 import yaml
 # import helper classes
 from data_models.image import Image
-from drawing_images_program import main as drawing_program
+from draw_areas import main as drawing_program
 # import utilities
 from utils.file_utils import add_extension, is_file_with_valid_extension
 from utils.input_utils import exit_if_false, exit_if_try_fails
