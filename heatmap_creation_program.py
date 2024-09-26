@@ -299,6 +299,7 @@ def create_timer(second, final_width, final_height):
     timer = np.ones((y_height, x_width, 3))
 
     # get text for timer
+    # TODO: Change to 'hour:minute:second' timer
     text = '%05d' % second
 
     # define text variables
@@ -668,6 +669,7 @@ def main():
             # read the camera video frames
             read_frame_start_time = time.time()
             camera_video_width = int(video_width * video_configs["proportions"]["width"]["cameras"])
+            # TODO: only read a frame from the video if there is a corresponding sensor value
             camera_frames = read_camera_frames(camera_video_objects, int(timestamp.timestamp()))
             lhs_cam_frames, rhs_cam_frames, lhs_cam_height = get_lhs_and_rhs_frames(camera_frames, camera_video_width, main_heatmap_component.shape[0])
             read_frame_times.append(time.time() - read_frame_start_time)
