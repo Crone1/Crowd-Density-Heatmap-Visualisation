@@ -1,8 +1,11 @@
 
-import numpy as np
+# import libraries
 import cv2
+import numpy as np
 
-from utils.maths_utils import generate_points_on_shape_boundary, get_closest_point_between_points, get_distance_to_point, get_equation_of_line, get_ratio_interval_point
+# import utilities
+from utils.maths_utils import generate_points_on_shape_boundary, get_closest_point_between_points, \
+    get_distance_to_point, get_ratio_interval_point
 
 
 class Shape:

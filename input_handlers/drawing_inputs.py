@@ -1,14 +1,15 @@
 
+# import libraries
 import argparse
 import os.path
 import sys
+
 import cv2
 import yaml
-
+# import helper classes
 from data_models.image import Image
-
+# import utilities
 from utils.input_utils import exit_if_false, exit_if_try_fails
-
 
 # read the default configuration variables
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

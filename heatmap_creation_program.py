@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 
 # import libraries
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import yaml
-import time
-import cv2
-from tqdm.auto import tqdm
 import os.path
+import time
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import yaml
+from tqdm.auto import tqdm
 
 # import helper classes
 from components.colourmap import ColourMap
 from data_models.shape import Shape
 from input_handlers.heatmap_inputs import HeatmapInputHandler
 from input_output.video_reader import VideoReader
-
 # import utilities
 from utils.cv2_config import cv2_dict
 from utils.image_utils import fig_to_img, uint_to_float
 from utils.maths_utils import convert_cartesian_to_polar, convert_polar_to_cartesian
-
 
 # read configurations
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

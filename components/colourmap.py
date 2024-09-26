@@ -1,13 +1,14 @@
 
+# import libraries
 import os.path
-import yaml
-import numpy as np
+
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
-
+import numpy as np
+import yaml
+# import utilities
 from utils.cv2_config import cv2_dict
-
 
 # read the colourmap customisation configuration variables
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
