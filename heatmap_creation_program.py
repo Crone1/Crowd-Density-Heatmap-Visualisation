@@ -17,9 +17,9 @@ from input_handlers.heatmap_inputs import HeatmapInputHandler
 from input_output.video_reader import VideoReader
 
 # import utilities
+from utils.cv2_config import cv2_dict
 from utils.image_utils import fig_to_img, uint_to_float
 from utils.maths_utils import convert_cartesian_to_polar, convert_polar_to_cartesian
-from configs.cv2_config import cv2_dict
 
 
 # read configurations

@@ -6,7 +6,7 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 
-from configs.cv2_config import cv2_dict
+from utils.cv2_config import cv2_dict
 
 
 # read the colourmap customisation configuration variables
