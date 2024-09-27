@@ -235,7 +235,7 @@ def create_event_text_box(second, events_dict, final_width, final_height, event_
     text_box = np.ones((y_height, x_width, 3))
 
     # get text for event box
-    potential_seconds = list(range(second - event_duration, second))
+    potential_seconds = list(range(second - event_duration, second + 1))
     found_seconds = [sec for sec in potential_seconds if sec in events_dict]
     if found_seconds:
         sec_to_display = max(found_seconds)
