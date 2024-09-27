@@ -298,8 +298,11 @@ def create_timer(second, final_width, final_height):
     timer = np.ones((y_height, x_width, 3))
 
     # get text for timer
-    # TODO: Change to 'hour:minute:second' timer
-    text = '%05d' % second
+    total_minutes = second // 60
+    secs = second % 60
+    mins = total_minutes % 60
+    hrs = total_minutes // 60
+    text = f"{hrs:02}:{mins:02}:{secs:02}"
 
     # define text variables
     timer_thickness = int(x_width * font_configs["timer"]["proportions"]["thickness"])

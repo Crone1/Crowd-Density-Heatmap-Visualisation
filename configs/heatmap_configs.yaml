@@ -44,7 +44,7 @@ fonts:
     type: FONT_HERSHEY_PLAIN
     line_type: LINE_AA
     proportions:
-      size: 0.017
+      size: 0.013
       thickness: 0.02
 
 
